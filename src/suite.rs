@@ -49,6 +49,7 @@ pub fn full_suite(
                 log_execution,
                 log_fact,
                 log_trees_and_suffix_array,
+                log_trees_and_suffix_array,
                 verbose,
             );
             let (suffix_array, execution_info) = compute_ptsaca(executor, str, chunk_size);
