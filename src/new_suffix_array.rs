@@ -14,7 +14,7 @@ use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 
-pub struct PTSacaOutputConf {
+pub struct PTSacaExecutor {
     project_folder: String,
     project_factorization_file: String,
     project_mini_tree_file: String,
@@ -22,7 +22,7 @@ pub struct PTSacaOutputConf {
     project_outcome_file_json: String,
     project_timing_file_json: String,
 }
-impl PTSacaOutputConf {
+impl PTSacaExecutor {
     pub fn new(fasta_file_name: &str, chunk_size: Option<usize>) -> Self {
         let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
@@ -45,10 +45,84 @@ impl PTSacaOutputConf {
             project_timing_file_json,
         }
     }
+
+    fn log_fact(&self, ptsaca: &PTSaca, str: &str) {
+        make_sure_directory_exist(&self.project_folder);
+        log_factorization(
+            &ptsaca.factor_indexes,
+            &ptsaca.icfl_indexes,
+            str,
+            &self.project_factorization_file,
+        );
+    }
+    fn log_trees(&self, ptsaca: &PTSaca) {
+        make_sure_directory_exist(&self.project_folder);
+        /*
+        log_tree(
+            &tree,
+            TreeLogMode::Tree,
+            get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
+            &str_chars,
+        );
+        log_tree(
+            &tree,
+            TreeLogMode::FullTree,
+            get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
+            &str_chars,
+        );
+        */
+        log_tree(
+            &ptsaca.tree,
+            TreeLogMode::MiniTree,
+            &self.project_mini_tree_file,
+            &ptsaca.str_chars,
+        );
+    }
+    fn log_suffix_array(&self, ptsaca: &PTSaca) {
+        log_suffix_array(
+            //
+            &ptsaca.suffix_array,
+            &self.project_suffix_array_file,
+        );
+    }
+    fn log_execution(&self, execution_info: &ExecutionInfo) {
+        make_sure_directory_exist(&self.project_folder);
+        // Execution Outcome JSON file
+        let execution_outcome_file_format =
+            ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
+        dump_json_in_file(
+            &execution_outcome_file_format,
+            &self.project_outcome_file_json,
+        );
+
+        // Execution Timing JSON file
+        let execution_timing_file_format =
+            ExecutionInfoFileFormat::new(&execution_info.execution_timing);
+        dump_json_in_file(
+            //
+            &execution_timing_file_format,
+            &self.project_timing_file_json,
+        );
+    }
+
+    fn print_debug_before(&self, ptsaca: &PTSaca, str: &str) {
+        println!("Before SUFFIX ARRAY PHASE");
+        print_for_human_like_debug(
+            str,
+            &ptsaca.icfl_indexes,
+            &ptsaca.factor_indexes,
+            &ptsaca.idx_to_icfl_factor,
+            &ptsaca.idx_to_is_custom,
+        );
+        ptsaca.tree.print(&ptsaca.str_chars);
+    }
+    fn print_debug_after(&self, ptsaca: &PTSaca) {
+        println!("After SUFFIX ARRAY PHASE");
+        ptsaca.tree.print(&ptsaca.str_chars);
+    }
 }
 
 pub struct PTSaca {
-    output_conf: PTSacaOutputConf,
     str_chars: Vec<char>,
     icfl_indexes: Vec<usize>,
     factor_indexes: Vec<usize>,
@@ -58,9 +132,8 @@ pub struct PTSaca {
     suffix_array: Vec<usize>,
 }
 impl PTSaca {
-    fn new(output_conf: PTSacaOutputConf) -> Self {
+    fn new() -> Self {
         Self {
-            output_conf,
             str_chars: Vec::new(),
             icfl_indexes: Vec::new(),
             factor_indexes: Vec::new(),
@@ -106,81 +179,6 @@ impl PTSaca {
             monitor,
         );
     }
-
-    fn log_fact(&self, str: &str) {
-        make_sure_directory_exist(&self.output_conf.project_folder);
-        log_factorization(
-            &self.factor_indexes,
-            &self.icfl_indexes,
-            str,
-            &self.output_conf.project_factorization_file,
-        );
-    }
-    fn log_trees(&self) {
-        make_sure_directory_exist(&self.output_conf.project_folder);
-        /*
-        log_tree(
-            &tree,
-            TreeLogMode::Tree,
-            get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        log_tree(
-            &tree,
-            TreeLogMode::FullTree,
-            get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        */
-        log_tree(
-            &self.tree,
-            TreeLogMode::MiniTree,
-            &self.output_conf.project_mini_tree_file,
-            &self.str_chars,
-        );
-    }
-    fn log_suffix_array(&self) {
-        log_suffix_array(
-            //
-            &self.suffix_array,
-            &self.output_conf.project_suffix_array_file,
-        );
-    }
-    fn log_execution(&self, execution_info: &ExecutionInfo) {
-        make_sure_directory_exist(&self.output_conf.project_folder);
-        // Execution Outcome JSON file
-        let execution_outcome_file_format =
-            ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
-        dump_json_in_file(
-            &execution_outcome_file_format,
-            &self.output_conf.project_outcome_file_json,
-        );
-
-        // Execution Timing JSON file
-        let execution_timing_file_format =
-            ExecutionInfoFileFormat::new(&execution_info.execution_timing);
-        dump_json_in_file(
-            //
-            &execution_timing_file_format,
-            &self.output_conf.project_timing_file_json,
-        );
-    }
-
-    fn print_debug_before(&self, str: &str) {
-        println!("Before SUFFIX ARRAY PHASE");
-        print_for_human_like_debug(
-            str,
-            &self.icfl_indexes,
-            &self.factor_indexes,
-            &self.idx_to_icfl_factor,
-            &self.idx_to_is_custom,
-        );
-        self.tree.print(&self.str_chars);
-    }
-    fn print_debug_after(&self) {
-        println!("After SUFFIX ARRAY PHASE");
-        self.tree.print(&self.str_chars);
-    }
 }
 
 pub fn compute_ptsaca(
@@ -192,8 +190,8 @@ pub fn compute_ptsaca(
     log_trees_and_suffix_array: bool,
     verbose: bool,
 ) -> (Vec<usize>, ExecutionInfo) {
-    let output_conf = PTSacaOutputConf::new(fasta_file_name, chunk_size);
-    let mut instance = PTSaca::new(output_conf);
+    let executor = PTSacaExecutor::new(fasta_file_name, chunk_size);
+    let mut instance = PTSaca::new();
 
     let mut monitor = Monitor::new();
     monitor.whole_duration.start();
@@ -204,7 +202,7 @@ pub fn compute_ptsaca(
 
     monitor.p1_fact.stop();
     if log_fact {
-        instance.log_fact(str);
+        executor.log_fact(&instance, str);
     }
     monitor.p2_tree.start();
 
@@ -213,10 +211,10 @@ pub fn compute_ptsaca(
 
     monitor.p2_tree.stop();
     if verbose {
-        instance.print_debug_before(str);
+        executor.print_debug_before(&instance, str);
     }
     if log_trees_and_suffix_array {
-        instance.log_trees();
+        executor.log_trees(&instance);
     }
     monitor.p3_sa.start();
 
@@ -226,14 +224,14 @@ pub fn compute_ptsaca(
     monitor.p3_sa.stop();
     monitor.whole_duration.stop();
     if verbose {
-        instance.print_debug_after();
+        executor.print_debug_after(&instance);
     }
     if log_trees_and_suffix_array {
-        instance.log_suffix_array();
+        executor.log_suffix_array(&instance);
     }
     let execution_info = monitor.transform_info_execution_info();
     if log_execution {
-        instance.log_execution(&execution_info);
+        executor.log_execution(&execution_info);
     }
 
     (
