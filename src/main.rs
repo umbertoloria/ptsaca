@@ -1,6 +1,8 @@
 #![allow(warnings)]
 
 use crate::extra::suites::generation::main_generation;
+use crate::factorization::cfl::cfl;
+use crate::factorization::icfl::icfl;
 use clap::{Parser, Subcommand};
 use std::fs::OpenOptions;
 use std::path::PathBuf;
@@ -18,7 +20,7 @@ mod suite;
 
 #[derive(Parser)]
 #[command(name = "ptsaca")]
-#[command(about = "A CLI tool for generation and execution", long_about = None)]
+#[command(about = "A CLI tool for generation and execution of PTSACA", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -34,6 +36,18 @@ enum Commands {
 
         /// Path to the output file (e.g., generated/123_700.fasta)
         path: PathBuf,
+    },
+
+    /// Executes CFL
+    Cfl {
+        /// The string to factorize (e.g., AAABCAABCADCAABCA)
+        src: String,
+    },
+
+    /// Executes ICFL
+    Icfl {
+        /// The string to factorize (e.g., AAABCAABCADCAABCA)
+        src: String,
     },
 
     /// Executes the main program logic
@@ -60,6 +74,26 @@ fn main() {
                 }
             }
         }
+        Commands::Cfl { src } => {
+            // let src = "AAABCAABCADCAABCA";
+            println!("CFL({})", src);
+            let factors = cfl(src);
+            for factor in factors {
+                println!("{}", factor);
+            }
+            println!();
+        }
+
+        Commands::Icfl { src } => {
+            // let src = "AAABCAABCADCAABCA";
+            println!("ICFL({})", src);
+            let factors = icfl(src);
+            for factor in factors {
+                println!("{}", factor);
+            }
+            println!();
+        }
+
         Commands::RunProgram => {
             main_run_program();
         }
@@ -67,11 +101,6 @@ fn main() {
 }
 
 fn main_run_program() {
-    // TODO: Control this main with CLI Interface with Arguments
-    // OLD SUITES
-    // main_generation();
-    // main_factorization();
-
     // Chunk Size Interval
     let chunk_size_vec_000 = create_chunk_size_interval_and_none(2, 7);
     let chunk_size_vec_001 = create_chunk_size_interval_and_none(2, 8);
