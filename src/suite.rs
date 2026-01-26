@@ -3,7 +3,79 @@ use crate::files::paths::get_path_in_generated_folder;
 use crate::new_suffix_array::{compute_ptsaca, PTSacaExecutor};
 use crate::plot::plot::draw_plot_from_monitor;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
+use std::fs::File;
 use std::time::Duration;
+
+pub fn only_compute(
+    fasta_file_name: String,
+    chunk_size: usize,
+    project_factorization_file: Option<File>,
+    project_mini_tree_file: Option<File>,
+    project_suffix_array_file: Option<File>,
+    project_outcome_file_json: Option<File>,
+    project_timing_file_json: Option<File>,
+    verbose: bool,
+) {
+    println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", &fasta_file_name);
+
+    // READING FILE
+    let str = &get_fasta_content(fasta_file_name);
+
+    // SUMS FOR MEAN
+    let mut sum_innovative_micros_vec = Vec::new();
+    sum_innovative_micros_vec.push((0, 0, 0));
+
+    // INNOVATIVE SUFFIX ARRAY
+    let mut i = 0;
+
+    let executor = PTSacaExecutor::new(
+        project_factorization_file,
+        project_mini_tree_file,
+        project_suffix_array_file,
+        project_outcome_file_json,
+        project_timing_file_json,
+        verbose,
+    );
+    let (suffix_array, execution_info) = compute_ptsaca(executor, str, Some(chunk_size));
+
+    let et = &execution_info.execution_timing;
+    sum_innovative_micros_vec[i].0 += et.p1_fact.dur.as_micros() as u64;
+    sum_innovative_micros_vec[i].1 += et.p2_tree.dur.as_micros() as u64;
+    sum_innovative_micros_vec[i].2 += et.p3_sa.dur.as_micros() as u64;
+    i += 1;
+
+    // CALCULATING MEANS AND PRINTING
+    println!("INNOVATIVE SUFFIX ARRAY CALCULATION");
+    let mut chunk_size_and_phase_micros_list = Vec::new();
+    let mut i = 0;
+
+    let sum_micros = &sum_innovative_micros_vec[i];
+    let micros = (
+        (sum_micros.0 as f32) as u64,
+        (sum_micros.1 as f32) as u64,
+        (sum_micros.2 as f32) as u64,
+    );
+    let chunk_size_or_zero = chunk_size;
+    println!("[CHUNK SIZE={chunk_size_or_zero}]");
+    print_duration(" > Phase 1: Factorization ", micros.0);
+    print_duration(" > Phase 2: Prefix Tree   ", micros.1);
+    print_duration(" > Phase 3: Suffix Array  ", micros.2);
+    chunk_size_and_phase_micros_list.push((chunk_size_or_zero, micros));
+    i += 1;
+
+    // PLOT
+    /*
+    // TODO: Enable plots
+    if draw_plot {
+        draw_plot_from_monitor(
+            fasta_file_name,
+            mean_classic_micros,
+            chunk_size_and_phase_micros_list,
+            max_duration_in_micros,
+        );
+    }
+    */
+}
 
 // SUITE COMPLETE FOR CLASSIC VS INNOVATIVE COMPUTATION
 pub fn full_suite(

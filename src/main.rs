@@ -3,6 +3,7 @@
 use crate::extra::suites::generation::main_generation;
 use crate::factorization::cfl::cfl;
 use crate::factorization::icfl::icfl;
+use crate::suite::only_compute;
 use clap::{Parser, Subcommand};
 use std::fs::OpenOptions;
 use std::path::PathBuf;
@@ -50,6 +51,18 @@ enum Commands {
         src: String,
     },
 
+    /// Executes PTSACA
+    Run {
+        /// Path of the source Fasta file (e.g., generated/002_70.fasta)
+        src_path: PathBuf,
+
+        /// Chunk size (e.g., 4)
+        chunk_size: usize,
+
+        /// Path to the output Suffix Array file (e.g., out/002_70_sa.txt)
+        out_file_sa_path: PathBuf,
+    },
+
     /// Executes the main program logic
     RunProgram,
 }
@@ -74,6 +87,7 @@ fn main() {
                 }
             }
         }
+
         Commands::Cfl { src } => {
             // let src = "AAABCAABCADCAABCA";
             println!("CFL({})", src);
@@ -92,6 +106,33 @@ fn main() {
                 println!("{}", factor);
             }
             println!();
+        }
+
+        Commands::Run {
+            src_path,
+            chunk_size,
+            out_file_sa_path: out_path,
+        } => {
+            let fasta_file_name = src_path.to_str().unwrap();
+
+            // TODO: Don't use this way anymore
+            let verbose = cfg!(feature = "verbose");
+
+            let out_sa_file = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .open(out_path)
+                .unwrap();
+            only_compute(
+                fasta_file_name.to_string(),
+                *chunk_size,
+                None,
+                None,
+                Some(out_sa_file),
+                None,
+                None,
+                verbose,
+            );
         }
 
         Commands::RunProgram => {
