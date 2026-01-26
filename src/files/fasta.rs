@@ -1,9 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
-pub fn get_fasta_content(filepath: String) -> String {
-    let file = File::open(filepath.as_str())
-        .expect(format!("Unable to read {} FASTA file", filepath).as_str());
+pub fn get_fasta_content(filepath: &str) -> std::io::Result<String> {
+    let file = File::open(filepath)?;
     let reader = BufReader::new(file);
 
     let mut lines = reader.lines();
@@ -11,11 +10,11 @@ pub fn get_fasta_content(filepath: String) -> String {
 
     let mut result = String::new();
     while let Some(line_result) = lines.next() {
-        let line_string = line_result.unwrap();
+        let line_string = line_result?;
         let line_str = line_string.as_str();
         result.push_str(line_str);
     }
-    result
+    Ok(result)
 }
 
 pub fn save_fasta_with_content(mut f: File, whole_line: String) {

@@ -6,7 +6,7 @@ use crate::factorization::icfl::icfl;
 use crate::suite::only_compute;
 use clap::{Parser, Subcommand};
 use std::fs::OpenOptions;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 use suite::full_suite;
 
@@ -113,18 +113,24 @@ fn main() {
             chunk_size,
             out_file_sa_path: out_path,
         } => {
-            let fasta_file_name = src_path.to_str().unwrap();
+            let fasta_file_name = src_path.to_str().expect("Unable to read source file path");
 
             // TODO: Don't use this way anymore
             let verbose = cfg!(feature = "verbose");
 
+            if let Some(p) = Path::new(out_path).parent() {
+                if !p.exists() && !p.as_os_str().is_empty() {
+                    panic!("Unable to open destination file");
+                }
+            }
             let out_sa_file = OpenOptions::new()
                 .write(true)
                 .create(true)
                 .open(out_path)
-                .unwrap();
+                .expect("Unable to open destination file");
+
             only_compute(
-                fasta_file_name.to_string(),
+                fasta_file_name,
                 *chunk_size,
                 None,
                 None,

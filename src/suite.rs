@@ -7,7 +7,7 @@ use std::fs::File;
 use std::time::Duration;
 
 pub fn only_compute(
-    fasta_file_name: String,
+    fasta_file_name: &str,
     chunk_size: usize,
     project_factorization_file: Option<File>,
     project_mini_tree_file: Option<File>,
@@ -16,10 +16,10 @@ pub fn only_compute(
     project_timing_file_json: Option<File>,
     verbose: bool,
 ) {
-    println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", &fasta_file_name);
+    println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
 
     // READING FILE
-    let str = &get_fasta_content(fasta_file_name);
+    let str = &get_fasta_content(fasta_file_name).expect("Unable to open source file");
 
     // SUMS FOR MEAN
     let mut sum_innovative_micros_vec = Vec::new();
@@ -93,7 +93,8 @@ pub fn full_suite(
     let verbose = cfg!(feature = "verbose");
 
     // READING FILE
-    let str = &get_fasta_content(get_path_in_generated_folder(fasta_file_name));
+    let str = &get_fasta_content(&get_path_in_generated_folder(fasta_file_name))
+        .expect("Unable to open source file");
 
     // SUMS FOR MEAN
     let mut sum_classic_micros = 0;
