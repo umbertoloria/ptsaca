@@ -42,8 +42,7 @@ pub fn full_suite(
         // INNOVATIVE SUFFIX ARRAY
         let mut i = 0;
         for &chunk_size in chunk_size_vec {
-            let executor = PTSacaExecutor::new(
-                //
+            let executor = PTSacaExecutor::new_from_flags(
                 fasta_file_name,
                 chunk_size,
                 log_execution,

@@ -9,8 +9,7 @@ pub enum TreeLogMode {
     FullTree,
     MiniTree,
 }
-pub fn log_tree(tree: &Tree, mode: TreeLogMode, filepath: &str, str: &[char]) {
-    let mut file = File::create(filepath).expect("Unable to create file");
+pub fn log_tree(tree: &Tree, mode: TreeLogMode, file: &mut File, str: &[char]) {
     // Logging from all First Layer Nodes to all Leafs (avoiding Root Node).
     for (child_node_label_pq, child_node) in &tree.root.children {
         let (child_node_label_p, child_node_label_q) = *child_node_label_pq;
@@ -20,7 +19,7 @@ pub fn log_tree(tree: &Tree, mode: TreeLogMode, filepath: &str, str: &[char]) {
             TreeLogMode::FullTree => format!("{}", get_string_clone(child_node_label)),
             TreeLogMode::MiniTree => format!("\"{:6}\"", child_node_label.len()),
         };
-        log_tree_recursive(&child_node, &child_label, mode, &mut file, 0, str);
+        log_tree_recursive(&child_node, &child_label, mode, file, 0, str);
     }
     file.flush().expect("Unable to flush file");
 }

@@ -13,85 +13,139 @@ use crate::prefix_tree::logging::{log_tree, TreeLogMode};
 use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
+use std::fs::{File, OpenOptions};
 
 pub struct PTSacaExecutor {
-    project_factorization_file: Option<String>,
-    project_mini_tree_file: Option<String>,
-    project_suffix_array_file: Option<String>,
-    project_outcome_file_json: Option<String>,
-    project_timing_file_json: Option<String>,
+    project_factorization_file: Option<File>,
+    project_mini_tree_file: Option<File>,
+    project_suffix_array_file: Option<File>,
+    project_outcome_file_json: Option<File>,
+    project_timing_file_json: Option<File>,
     verbose: bool,
 }
 impl PTSacaExecutor {
     pub fn new(
+        project_factorization_file: Option<File>,
+        project_mini_tree_file: Option<File>,
+        project_suffix_array_file: Option<File>,
+        project_outcome_file_json: Option<File>,
+        project_timing_file_json: Option<File>,
+        verbose: bool,
+    ) -> Self {
+        Self {
+            project_factorization_file,
+            project_mini_tree_file,
+            project_suffix_array_file,
+            project_outcome_file_json,
+            project_timing_file_json,
+            verbose,
+        }
+    }
+    pub fn new_from_flags(
         fasta_file_name: &str,
         chunk_size: Option<usize>,
-        log_execution: bool,
         log_fact: bool,
         log_trees: bool,
         log_suffix_array: bool,
+        log_execution: bool,
         verbose: bool,
     ) -> Self {
         let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
         make_sure_directory_exist(&project_folder);
-        Self {
-            project_factorization_file: if log_fact {
-                Some(get_path_for_project_factorization_file(
-                    fasta_file_name,
-                    chunk_size_or_zero,
-                ))
-            } else {
-                None
-            },
-            project_mini_tree_file: if log_trees {
-                Some(get_path_for_project_mini_tree_file(
-                    fasta_file_name,
-                    chunk_size_or_zero,
-                ))
-            } else {
-                None
-            },
-            project_suffix_array_file: if log_suffix_array {
-                Some(get_path_for_project_suffix_array_file(
-                    fasta_file_name,
-                    chunk_size_or_zero,
-                ))
-            } else {
-                None
-            },
-            project_outcome_file_json: if log_execution {
-                Some(get_path_for_project_outcome_file_json(
-                    fasta_file_name,
-                    chunk_size_or_zero,
-                ))
-            } else {
-                None
-            },
-            project_timing_file_json: if log_execution {
-                Some(get_path_for_project_timing_file_json(
-                    fasta_file_name,
-                    chunk_size_or_zero,
-                ))
-            } else {
-                None
-            },
+
+        let project_factorization_file = if log_fact {
+            Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(get_path_for_project_factorization_file(
+                        fasta_file_name,
+                        chunk_size_or_zero,
+                    ))
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        let project_mini_tree_file = if log_trees {
+            Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(get_path_for_project_mini_tree_file(
+                        fasta_file_name,
+                        chunk_size_or_zero,
+                    ))
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        let project_suffix_array_file = if log_suffix_array {
+            Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(get_path_for_project_suffix_array_file(
+                        fasta_file_name,
+                        chunk_size_or_zero,
+                    ))
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        let project_outcome_file_json = if log_execution {
+            Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(get_path_for_project_outcome_file_json(
+                        fasta_file_name,
+                        chunk_size_or_zero,
+                    ))
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        let project_timing_file_json = if log_execution {
+            Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(get_path_for_project_timing_file_json(
+                        fasta_file_name,
+                        chunk_size_or_zero,
+                    ))
+                    .unwrap(),
+            )
+        } else {
+            None
+        };
+        Self::new(
+            project_factorization_file,
+            project_mini_tree_file,
+            project_suffix_array_file,
+            project_outcome_file_json,
+            project_timing_file_json,
             verbose,
-        }
+        )
     }
 
-    fn log_fact(&self, ptsaca: &PTSaca, str: &str) {
-        if let Some(project_factorization_file) = &self.project_factorization_file {
+    fn log_fact(&mut self, ptsaca: &PTSaca, str: &str) {
+        if let Some(project_factorization_file) = &mut self.project_factorization_file {
             log_factorization(
                 &ptsaca.factor_indexes,
                 &ptsaca.icfl_indexes,
                 str,
-                &project_factorization_file,
+                project_factorization_file,
             );
         }
     }
-    fn log_trees(&self, ptsaca: &PTSaca) {
-        if let Some(project_mini_tree_file) = &self.project_mini_tree_file {
+    fn log_trees(&mut self, ptsaca: &PTSaca) {
+        if let Some(project_mini_tree_file) = &mut self.project_mini_tree_file {
             /*
             log_tree(
                 &tree,
@@ -109,36 +163,36 @@ impl PTSacaExecutor {
             log_tree(
                 &ptsaca.tree,
                 TreeLogMode::MiniTree,
-                &project_mini_tree_file,
+                project_mini_tree_file,
                 &ptsaca.str_chars,
             );
         }
     }
-    fn log_suffix_array(&self, ptsaca: &PTSaca) {
-        if let Some(project_suffix_array_file) = &self.project_suffix_array_file {
+    fn log_suffix_array(&mut self, ptsaca: &PTSaca) {
+        if let Some(project_suffix_array_file) = &mut self.project_suffix_array_file {
             log_suffix_array(
                 //
                 &ptsaca.suffix_array,
-                &project_suffix_array_file,
+                project_suffix_array_file,
             );
         }
     }
-    fn log_execution(&self, execution_info: &ExecutionInfo) {
-        if let Some(project_outcome_file_json) = &self.project_outcome_file_json {
+    fn log_execution(&mut self, execution_info: &ExecutionInfo) {
+        if let Some(project_outcome_file_json) = &mut self.project_outcome_file_json {
             // Execution Outcome JSON file
             let execution_outcome_file_format =
                 ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
-            dump_json_in_file(&execution_outcome_file_format, &project_outcome_file_json);
+            dump_json_in_file(&execution_outcome_file_format, project_outcome_file_json);
         }
 
-        if let Some(project_timing_file_json) = &self.project_timing_file_json {
+        if let Some(project_timing_file_json) = &mut self.project_timing_file_json {
             // Execution Timing JSON file
             let execution_timing_file_format =
                 ExecutionInfoFileFormat::new(&execution_info.execution_timing);
             dump_json_in_file(
                 //
                 &execution_timing_file_format,
-                &project_timing_file_json,
+                project_timing_file_json,
             );
         }
     }
@@ -224,7 +278,7 @@ impl PTSaca {
 }
 
 pub fn compute_ptsaca(
-    executor: PTSacaExecutor,
+    mut executor: PTSacaExecutor,
     str: &str,
     chunk_size: Option<usize>,
 ) -> (Vec<usize>, ExecutionInfo) {

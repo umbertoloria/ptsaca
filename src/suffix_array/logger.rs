@@ -4,8 +4,7 @@ use std::io::Write;
 pub fn make_sure_directory_exist(folder_path: &str) {
     create_dir_all(folder_path).unwrap();
 }
-pub fn log_suffix_array(sa: &Vec<usize>, filepath: &str) {
-    let mut file = File::create(filepath).expect("Unable to create file");
+pub fn log_suffix_array(sa: &Vec<usize>, file: &mut File) {
     for sa_item in sa {
         file.write(format!("{}\n", sa_item).as_bytes())
             .expect("Unable to write");
