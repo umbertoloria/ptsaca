@@ -26,8 +26,13 @@ pub struct InnTry {
     project_suffix_array_file: String,
     project_outcome_file_json: String,
     project_timing_file_json: String,
-    factor_indexes: Vec<usize>,
+    str_chars: Vec<char>,
     icfl_indexes: Vec<usize>,
+    factor_indexes: Vec<usize>,
+    idx_to_is_custom: Vec<bool>,
+    idx_to_icfl_factor: Vec<usize>,
+    tree: Tree,
+    suffix_array: Vec<usize>,
 }
 impl InnTry {
     fn new(fasta_file_name: &str, chunk_size_or_zero: usize) -> Self {
@@ -49,10 +54,52 @@ impl InnTry {
             project_suffix_array_file,
             project_outcome_file_json,
             project_timing_file_json,
-            factor_indexes: Vec::new(),
+            str_chars: Vec::new(),
             icfl_indexes: Vec::new(),
+            factor_indexes: Vec::new(),
+            idx_to_is_custom: Vec::new(),
+            idx_to_icfl_factor: Vec::new(),
+            tree: Tree::new(),
+            suffix_array: Vec::new(),
         }
     }
+
+    fn p1_factorization(&mut self, str: &str, chunk_size: Option<usize>) {
+        // ICFL Factorization
+        let str_chars = str.chars().collect::<Vec<_>>();
+        let icfl_indexes = get_icfl_indexes(&str_chars);
+        // Custom Factorization
+        let (
+            //
+            factor_indexes,
+            idx_to_is_custom,
+            idx_to_icfl_factor,
+        ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, chunk_size, str.len());
+        self.str_chars = str_chars;
+        self.icfl_indexes = icfl_indexes;
+        self.factor_indexes = factor_indexes;
+        self.idx_to_is_custom = idx_to_is_custom;
+        self.idx_to_icfl_factor = idx_to_icfl_factor;
+    }
+    fn p2_tree(&mut self, monitor: &mut Monitor) {
+        self.tree = create_tree(
+            &self.str_chars,
+            &self.factor_indexes,
+            &self.icfl_indexes,
+            &self.idx_to_is_custom,
+            monitor,
+        );
+    }
+    fn p3_suffix_array(&mut self, str: &str, monitor: &mut Monitor) {
+        self.suffix_array = self.tree.compute_suffix_array(
+            str,
+            &self.icfl_indexes,
+            &self.idx_to_is_custom,
+            &self.idx_to_icfl_factor,
+            monitor,
+        );
+    }
+
     fn log_fact(&self, str: &str) {
         make_sure_directory_exist(&self.project_folder);
         log_factorization(
@@ -62,7 +109,7 @@ impl InnTry {
             &self.project_factorization_file,
         );
     }
-    fn log_trees(&self, tree: &Tree, str_chars: &Vec<char>) {
+    fn log_trees(&self) {
         make_sure_directory_exist(&self.project_folder);
         /*
         log_tree(
@@ -79,16 +126,16 @@ impl InnTry {
         );
         */
         log_tree(
-            &tree,
+            &self.tree,
             TreeLogMode::MiniTree,
             &self.project_mini_tree_file,
-            &str_chars,
+            &self.str_chars,
         );
     }
-    fn log_suffix_array(&self, suffix_array: &Vec<usize>) {
+    fn log_suffix_array(&self) {
         log_suffix_array(
             //
-            &suffix_array,
+            &self.suffix_array,
             &self.project_suffix_array_file,
         );
     }
@@ -112,6 +159,7 @@ impl InnTry {
         );
     }
 }
+
 pub fn compute_innovative_suffix_array(
     fasta_file_name: &str,
     str: &str,
@@ -129,20 +177,8 @@ pub fn compute_innovative_suffix_array(
 
     // FACTORIZATION
     monitor.p1_fact.start();
-    // ICFL Factorization
-    let str_chars = str.chars().collect::<Vec<_>>();
-    let icfl_indexes = get_icfl_indexes(&str_chars);
-    // Custom Factorization
-    let (
-        //
-        factor_indexes,
-        idx_to_is_custom,
-        idx_to_icfl_factor,
-    ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, chunk_size, str.len());
+    instance.p1_factorization(str, chunk_size);
     monitor.p1_fact.stop();
-
-    instance.factor_indexes.extend(factor_indexes);
-    instance.icfl_indexes.extend(icfl_indexes);
 
     // + Extra
     if log_fact {
@@ -152,13 +188,7 @@ pub fn compute_innovative_suffix_array(
 
     // TREE
     monitor.p2_tree.start();
-    let mut tree = create_tree(
-        &str_chars,
-        &instance.factor_indexes,
-        &instance.icfl_indexes,
-        &idx_to_is_custom,
-        &mut monitor,
-    );
+    instance.p2_tree(&mut monitor);
     monitor.p2_tree.stop();
 
     // + Extra
@@ -168,35 +198,29 @@ pub fn compute_innovative_suffix_array(
             str,
             &instance.icfl_indexes,
             &instance.factor_indexes,
-            &idx_to_icfl_factor,
-            &idx_to_is_custom,
+            &instance.idx_to_icfl_factor,
+            &instance.idx_to_is_custom,
         );
-        tree.print(&str_chars);
+        instance.tree.print(&instance.str_chars);
     }
     if log_trees_and_suffix_array {
-        instance.log_trees(&tree, &str_chars);
+        instance.log_trees();
     }
     // - Extra
 
     // SUFFIX ARRAY
     monitor.p3_sa.start();
-    let suffix_array = tree.compute_suffix_array(
-        str,
-        &instance.icfl_indexes,
-        &idx_to_is_custom,
-        &idx_to_icfl_factor,
-        &mut monitor,
-    );
+    instance.p3_suffix_array(str, &mut monitor);
     monitor.p3_sa.stop();
     monitor.whole_duration.stop();
 
     // + Extra
     if cfg!(feature = "verbose") {
         println!("After SUFFIX ARRAY PHASE");
-        tree.print(&str_chars);
+        instance.tree.print(&instance.str_chars);
     }
     if log_trees_and_suffix_array {
-        instance.log_suffix_array(&suffix_array);
+        instance.log_suffix_array();
     }
     let execution_info = monitor.transform_info_execution_info();
     if log_execution {
@@ -206,7 +230,7 @@ pub fn compute_innovative_suffix_array(
     // - Extra
 
     InnovativeSuffixArrayComputationResults {
-        suffix_array,
+        suffix_array: instance.suffix_array,
         execution_info,
     }
 }
