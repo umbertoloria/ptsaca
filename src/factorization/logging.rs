@@ -5,7 +5,7 @@ pub fn log_factorization(
     factor_indexes: &Vec<usize>,
     icfl_indexes: &Vec<usize>,
     str: &str,
-    filepath: String,
+    filepath: &str,
 ) {
     let mut file = File::create(filepath).expect("Unable to create file");
     let mut content = String::new();

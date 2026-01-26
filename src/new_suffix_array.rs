@@ -11,13 +11,106 @@ use crate::prefix_tree::log_execution_info::ExecutionInfoFileFormat;
 use crate::prefix_tree::log_execution_outcome::ExecutionOutcomeFileFormat;
 use crate::prefix_tree::logging::{log_tree, TreeLogMode};
 use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
-use crate::prefix_tree::tree::create_tree;
+use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 
 // INNOVATIVE SUFFIX ARRAY
 pub struct InnovativeSuffixArrayComputationResults {
     pub suffix_array: Vec<usize>,
     pub execution_info: ExecutionInfo,
+}
+pub struct InnTry {
+    project_folder: String,
+    project_factorization_file: String,
+    project_mini_tree_file: String,
+    project_suffix_array_file: String,
+    project_outcome_file_json: String,
+    project_timing_file_json: String,
+    factor_indexes: Vec<usize>,
+    icfl_indexes: Vec<usize>,
+}
+impl InnTry {
+    fn new(fasta_file_name: &str, chunk_size_or_zero: usize) -> Self {
+        let project_folder = get_path_for_project_folder(fasta_file_name);
+        let project_factorization_file =
+            get_path_for_project_factorization_file(fasta_file_name, chunk_size_or_zero);
+        let project_mini_tree_file =
+            get_path_for_project_mini_tree_file(fasta_file_name, chunk_size_or_zero);
+        let project_suffix_array_file =
+            get_path_for_project_suffix_array_file(fasta_file_name, chunk_size_or_zero);
+        let project_outcome_file_json =
+            get_path_for_project_outcome_file_json(fasta_file_name, chunk_size_or_zero);
+        let project_timing_file_json =
+            get_path_for_project_timing_file_json(fasta_file_name, chunk_size_or_zero);
+        Self {
+            project_folder,
+            project_factorization_file,
+            project_mini_tree_file,
+            project_suffix_array_file,
+            project_outcome_file_json,
+            project_timing_file_json,
+            factor_indexes: Vec::new(),
+            icfl_indexes: Vec::new(),
+        }
+    }
+    fn log_fact(&self, str: &str) {
+        make_sure_directory_exist(&self.project_folder);
+        log_factorization(
+            &self.factor_indexes,
+            &self.icfl_indexes,
+            str,
+            &self.project_factorization_file,
+        );
+    }
+    fn log_trees(&self, tree: &Tree, str_chars: &Vec<char>) {
+        make_sure_directory_exist(&self.project_folder);
+        /*
+        log_tree(
+            &tree,
+            TreeLogMode::Tree,
+            get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
+            &str_chars,
+        );
+        log_tree(
+            &tree,
+            TreeLogMode::FullTree,
+            get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
+            &str_chars,
+        );
+        */
+        log_tree(
+            &tree,
+            TreeLogMode::MiniTree,
+            &self.project_mini_tree_file,
+            &str_chars,
+        );
+    }
+    fn log_suffix_array(&self, suffix_array: &Vec<usize>) {
+        log_suffix_array(
+            //
+            &suffix_array,
+            &self.project_suffix_array_file,
+        );
+    }
+    fn log_execution(&self, execution_info: &ExecutionInfo) {
+        make_sure_directory_exist(&self.project_folder);
+        // Execution Outcome JSON file
+        let execution_outcome_file_format =
+            ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
+        dump_json_in_file(
+            &execution_outcome_file_format,
+            &self.project_outcome_file_json,
+        );
+
+        // Execution Timing JSON file
+        let execution_timing_file_format =
+            ExecutionInfoFileFormat::new(&execution_info.execution_timing);
+        dump_json_in_file(
+            //
+            &execution_timing_file_format,
+            &self.project_timing_file_json,
+        );
+    }
 }
 pub fn compute_innovative_suffix_array(
     fasta_file_name: &str,
@@ -29,17 +122,7 @@ pub fn compute_innovative_suffix_array(
 ) -> InnovativeSuffixArrayComputationResults {
     let chunk_size_or_zero = chunk_size.unwrap_or(0);
 
-    let project_folder = get_path_for_project_folder(fasta_file_name);
-    let project_factorization_file =
-        get_path_for_project_factorization_file(fasta_file_name, chunk_size_or_zero);
-    let project_mini_tree_file =
-        get_path_for_project_mini_tree_file(fasta_file_name, chunk_size_or_zero);
-    let project_suffix_array_file =
-        get_path_for_project_suffix_array_file(fasta_file_name, chunk_size_or_zero);
-    let project_outcome_file_json =
-        get_path_for_project_outcome_file_json(fasta_file_name, chunk_size_or_zero);
-    let project_timing_file_json =
-        get_path_for_project_timing_file_json(fasta_file_name, chunk_size_or_zero);
+    let mut instance = InnTry::new(fasta_file_name, chunk_size_or_zero);
 
     let mut monitor = Monitor::new();
     monitor.whole_duration.start();
@@ -58,15 +141,12 @@ pub fn compute_innovative_suffix_array(
     ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, chunk_size, str.len());
     monitor.p1_fact.stop();
 
+    instance.factor_indexes.extend(factor_indexes);
+    instance.icfl_indexes.extend(icfl_indexes);
+
     // + Extra
     if log_fact {
-        make_sure_directory_exist(&project_folder);
-        log_factorization(
-            &factor_indexes,
-            &icfl_indexes,
-            str,
-            project_factorization_file,
-        );
+        instance.log_fact(str);
     }
     // - Extra
 
@@ -74,8 +154,8 @@ pub fn compute_innovative_suffix_array(
     monitor.p2_tree.start();
     let mut tree = create_tree(
         &str_chars,
-        &factor_indexes,
-        &icfl_indexes,
+        &instance.factor_indexes,
+        &instance.icfl_indexes,
         &idx_to_is_custom,
         &mut monitor,
     );
@@ -86,35 +166,15 @@ pub fn compute_innovative_suffix_array(
         println!("Before SUFFIX ARRAY PHASE");
         print_for_human_like_debug(
             str,
-            &icfl_indexes,
-            &factor_indexes,
+            &instance.icfl_indexes,
+            &instance.factor_indexes,
             &idx_to_icfl_factor,
             &idx_to_is_custom,
         );
         tree.print(&str_chars);
     }
     if log_trees_and_suffix_array {
-        make_sure_directory_exist(&project_folder);
-        /*
-        log_tree(
-            &tree,
-            TreeLogMode::Tree,
-            get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        log_tree(
-            &tree,
-            TreeLogMode::FullTree,
-            get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        */
-        log_tree(
-            &tree,
-            TreeLogMode::MiniTree,
-            project_mini_tree_file,
-            &str_chars,
-        );
+        instance.log_trees(&tree, &str_chars);
     }
     // - Extra
 
@@ -122,7 +182,7 @@ pub fn compute_innovative_suffix_array(
     monitor.p3_sa.start();
     let suffix_array = tree.compute_suffix_array(
         str,
-        &icfl_indexes,
+        &instance.icfl_indexes,
         &idx_to_is_custom,
         &idx_to_icfl_factor,
         &mut monitor,
@@ -136,20 +196,11 @@ pub fn compute_innovative_suffix_array(
         tree.print(&str_chars);
     }
     if log_trees_and_suffix_array {
-        log_suffix_array(&suffix_array, project_suffix_array_file);
+        instance.log_suffix_array(&suffix_array);
     }
     let execution_info = monitor.transform_info_execution_info();
     if log_execution {
-        make_sure_directory_exist(&project_folder);
-        // Execution Outcome JSON file
-        let execution_outcome_file_format =
-            ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
-        dump_json_in_file(&execution_outcome_file_format, project_outcome_file_json);
-
-        // Execution Timing JSON file
-        let execution_timing_file_format =
-            ExecutionInfoFileFormat::new(&execution_info.execution_timing);
-        dump_json_in_file(&execution_timing_file_format, project_timing_file_json);
+        instance.log_execution(&execution_info);
     }
     // println!("Total time: {}", duration.as_secs_f32());
     // - Extra

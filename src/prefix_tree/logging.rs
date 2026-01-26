@@ -9,7 +9,7 @@ pub enum TreeLogMode {
     FullTree,
     MiniTree,
 }
-pub fn log_tree(tree: &Tree, mode: TreeLogMode, filepath: String, str: &[char]) {
+pub fn log_tree(tree: &Tree, mode: TreeLogMode, filepath: &str, str: &[char]) {
     let mut file = File::create(filepath).expect("Unable to create file");
     // Logging from all First Layer Nodes to all Leafs (avoiding Root Node).
     for (child_node_label_pq, child_node) in &tree.root.children {
