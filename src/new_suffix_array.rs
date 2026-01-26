@@ -4,9 +4,8 @@ use crate::factorization::logging::log_factorization;
 use crate::files::json::dump_json_in_file;
 use crate::files::paths::{
     get_path_for_project_factorization_file, get_path_for_project_folder,
-    get_path_for_project_full_tree_file, get_path_for_project_mini_tree_file,
-    get_path_for_project_outcome_file_json, get_path_for_project_suffix_array_file,
-    get_path_for_project_timing_file_json, get_path_for_project_tree_file,
+    get_path_for_project_mini_tree_file, get_path_for_project_outcome_file_json,
+    get_path_for_project_suffix_array_file, get_path_for_project_timing_file_json,
 };
 use crate::prefix_tree::log_execution_info::ExecutionInfoFileFormat;
 use crate::prefix_tree::log_execution_outcome::ExecutionOutcomeFileFormat;
@@ -29,6 +28,19 @@ pub fn compute_innovative_suffix_array(
     log_trees_and_suffix_array: bool,
 ) -> InnovativeSuffixArrayComputationResults {
     let chunk_size_or_zero = chunk_size.unwrap_or(0);
+
+    let project_folder = get_path_for_project_folder(fasta_file_name);
+    let project_factorization_file =
+        get_path_for_project_factorization_file(fasta_file_name, chunk_size_or_zero);
+    let project_mini_tree_file =
+        get_path_for_project_mini_tree_file(fasta_file_name, chunk_size_or_zero);
+    let project_suffix_array_file =
+        get_path_for_project_suffix_array_file(fasta_file_name, chunk_size_or_zero);
+    let project_outcome_file_json =
+        get_path_for_project_outcome_file_json(fasta_file_name, chunk_size_or_zero);
+    let project_timing_file_json =
+        get_path_for_project_timing_file_json(fasta_file_name, chunk_size_or_zero);
+
     let mut monitor = Monitor::new();
     monitor.whole_duration.start();
 
@@ -48,12 +60,12 @@ pub fn compute_innovative_suffix_array(
 
     // + Extra
     if log_fact {
-        make_sure_directory_exist(get_path_for_project_folder(fasta_file_name));
+        make_sure_directory_exist(&project_folder);
         log_factorization(
             &factor_indexes,
             &icfl_indexes,
             str,
-            get_path_for_project_factorization_file(fasta_file_name, chunk_size_or_zero),
+            project_factorization_file,
         );
     }
     // - Extra
@@ -82,7 +94,7 @@ pub fn compute_innovative_suffix_array(
         tree.print(&str_chars);
     }
     if log_trees_and_suffix_array {
-        make_sure_directory_exist(get_path_for_project_folder(fasta_file_name));
+        make_sure_directory_exist(&project_folder);
         /*
         log_tree(
             &tree,
@@ -100,7 +112,7 @@ pub fn compute_innovative_suffix_array(
         log_tree(
             &tree,
             TreeLogMode::MiniTree,
-            get_path_for_project_mini_tree_file(fasta_file_name, chunk_size_or_zero),
+            project_mini_tree_file,
             &str_chars,
         );
     }
@@ -124,29 +136,20 @@ pub fn compute_innovative_suffix_array(
         tree.print(&str_chars);
     }
     if log_trees_and_suffix_array {
-        log_suffix_array(
-            &suffix_array,
-            get_path_for_project_suffix_array_file(fasta_file_name, chunk_size_or_zero),
-        );
+        log_suffix_array(&suffix_array, project_suffix_array_file);
     }
     let execution_info = monitor.transform_info_execution_info();
     if log_execution {
-        make_sure_directory_exist(get_path_for_project_folder(fasta_file_name));
+        make_sure_directory_exist(&project_folder);
         // Execution Outcome JSON file
         let execution_outcome_file_format =
             ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
-        dump_json_in_file(
-            &execution_outcome_file_format,
-            get_path_for_project_outcome_file_json(fasta_file_name, chunk_size_or_zero),
-        );
+        dump_json_in_file(&execution_outcome_file_format, project_outcome_file_json);
 
         // Execution Timing JSON file
         let execution_timing_file_format =
             ExecutionInfoFileFormat::new(&execution_info.execution_timing);
-        dump_json_in_file(
-            &execution_timing_file_format,
-            get_path_for_project_timing_file_json(fasta_file_name, chunk_size_or_zero),
-        );
+        dump_json_in_file(&execution_timing_file_format, project_timing_file_json);
     }
     // println!("Total time: {}", duration.as_secs_f32());
     // - Extra
