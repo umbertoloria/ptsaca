@@ -1,5 +1,10 @@
 #![allow(warnings)]
 
+use crate::extra::suites::generation::main_generation;
+use clap::{Parser, Subcommand};
+use std::fs::OpenOptions;
+use std::path::PathBuf;
+use std::process;
 use suite::full_suite;
 
 mod extra;
@@ -11,7 +16,57 @@ mod prefix_tree;
 mod suffix_array;
 mod suite;
 
+#[derive(Parser)]
+#[command(name = "ptsaca")]
+#[command(about = "A CLI tool for generation and execution", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Generates a Fasta file containing a random genome of given length on ACGT alphabet
+    GenFf {
+        /// A positive number (e.g., 700000)
+        #[arg(value_parser = clap::value_parser!(u64).range(0..))]
+        length: u64,
+
+        /// Path to the output file (e.g., generated/123_700.fasta)
+        path: PathBuf,
+    },
+
+    /// Executes the main program logic
+    RunProgram,
+}
+
 fn main() {
+    let cli = Cli::parse();
+
+    match &cli.command {
+        Commands::GenFf { length, path } => {
+            let file_result = OpenOptions::new().write(true).create_new(true).open(&path);
+            match file_result {
+                Ok(_file) => {
+                    main_generation(*length, _file);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+                    eprintln!("Error: The file {:?} already exists. Stopping.", path);
+                    process::exit(1);
+                }
+                Err(e) => {
+                    eprintln!("Error: Could not create file: {}", e);
+                    process::exit(1);
+                }
+            }
+        }
+        Commands::RunProgram => {
+            main_run_program();
+        }
+    }
+}
+
+fn main_run_program() {
     // TODO: Control this main with CLI Interface with Arguments
     // OLD SUITES
     // main_generation();

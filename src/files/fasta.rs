@@ -18,12 +18,11 @@ pub fn get_fasta_content(filepath: String) -> String {
     result
 }
 
-pub fn save_fasta_with_content(filepath: String, whole_line: String) {
+pub fn save_fasta_with_content(mut f: File, whole_line: String) {
     let max_chars_in_line = 70;
 
     let string_length = whole_line.len();
 
-    let mut f = File::create(filepath).expect("Unable to create file");
     f.write(format!(">GENERATED, with {} chars\n", string_length).as_bytes())
         .expect("Unable to write first line");
 
