@@ -14,23 +14,16 @@ use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 
-pub struct PTSaca {
+pub struct PTSacaOutputConf {
     project_folder: String,
     project_factorization_file: String,
     project_mini_tree_file: String,
     project_suffix_array_file: String,
     project_outcome_file_json: String,
     project_timing_file_json: String,
-    str_chars: Vec<char>,
-    icfl_indexes: Vec<usize>,
-    factor_indexes: Vec<usize>,
-    idx_to_is_custom: Vec<bool>,
-    idx_to_icfl_factor: Vec<usize>,
-    tree: Tree,
-    suffix_array: Vec<usize>,
 }
-impl PTSaca {
-    fn new(fasta_file_name: &str, chunk_size: Option<usize>) -> Self {
+impl PTSacaOutputConf {
+    pub fn new(fasta_file_name: &str, chunk_size: Option<usize>) -> Self {
         let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
         let project_factorization_file =
@@ -50,6 +43,24 @@ impl PTSaca {
             project_suffix_array_file,
             project_outcome_file_json,
             project_timing_file_json,
+        }
+    }
+}
+
+pub struct PTSaca {
+    output_conf: PTSacaOutputConf,
+    str_chars: Vec<char>,
+    icfl_indexes: Vec<usize>,
+    factor_indexes: Vec<usize>,
+    idx_to_is_custom: Vec<bool>,
+    idx_to_icfl_factor: Vec<usize>,
+    tree: Tree,
+    suffix_array: Vec<usize>,
+}
+impl PTSaca {
+    fn new(output_conf: PTSacaOutputConf) -> Self {
+        Self {
+            output_conf,
             str_chars: Vec::new(),
             icfl_indexes: Vec::new(),
             factor_indexes: Vec::new(),
@@ -97,16 +108,16 @@ impl PTSaca {
     }
 
     fn log_fact(&self, str: &str) {
-        make_sure_directory_exist(&self.project_folder);
+        make_sure_directory_exist(&self.output_conf.project_folder);
         log_factorization(
             &self.factor_indexes,
             &self.icfl_indexes,
             str,
-            &self.project_factorization_file,
+            &self.output_conf.project_factorization_file,
         );
     }
     fn log_trees(&self) {
-        make_sure_directory_exist(&self.project_folder);
+        make_sure_directory_exist(&self.output_conf.project_folder);
         /*
         log_tree(
             &tree,
@@ -124,7 +135,7 @@ impl PTSaca {
         log_tree(
             &self.tree,
             TreeLogMode::MiniTree,
-            &self.project_mini_tree_file,
+            &self.output_conf.project_mini_tree_file,
             &self.str_chars,
         );
     }
@@ -132,17 +143,17 @@ impl PTSaca {
         log_suffix_array(
             //
             &self.suffix_array,
-            &self.project_suffix_array_file,
+            &self.output_conf.project_suffix_array_file,
         );
     }
     fn log_execution(&self, execution_info: &ExecutionInfo) {
-        make_sure_directory_exist(&self.project_folder);
+        make_sure_directory_exist(&self.output_conf.project_folder);
         // Execution Outcome JSON file
         let execution_outcome_file_format =
             ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
         dump_json_in_file(
             &execution_outcome_file_format,
-            &self.project_outcome_file_json,
+            &self.output_conf.project_outcome_file_json,
         );
 
         // Execution Timing JSON file
@@ -151,7 +162,7 @@ impl PTSaca {
         dump_json_in_file(
             //
             &execution_timing_file_format,
-            &self.project_timing_file_json,
+            &self.output_conf.project_timing_file_json,
         );
     }
 
@@ -181,7 +192,8 @@ pub fn compute_ptsaca(
     log_trees_and_suffix_array: bool,
     verbose: bool,
 ) -> (Vec<usize>, ExecutionInfo) {
-    let mut instance = PTSaca::new(fasta_file_name, chunk_size);
+    let output_conf = PTSacaOutputConf::new(fasta_file_name, chunk_size);
+    let mut instance = PTSaca::new(output_conf);
 
     let mut monitor = Monitor::new();
     monitor.whole_duration.start();
