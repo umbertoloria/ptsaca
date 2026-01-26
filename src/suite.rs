@@ -1,6 +1,6 @@
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
-use crate::new_suffix_array::compute_ptsaca;
+use crate::new_suffix_array::{compute_ptsaca, PTSacaExecutor};
 use crate::plot::plot::draw_plot_from_monitor;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
 use std::time::Duration;
@@ -42,15 +42,16 @@ pub fn full_suite(
         // INNOVATIVE SUFFIX ARRAY
         let mut i = 0;
         for &chunk_size in chunk_size_vec {
-            let (suffix_array, execution_info) = compute_ptsaca(
+            let executor = PTSacaExecutor::new(
+                //
                 fasta_file_name,
-                str,
                 chunk_size,
                 log_execution,
                 log_fact,
                 log_trees_and_suffix_array,
                 verbose,
             );
+            let (suffix_array, execution_info) = compute_ptsaca(executor, str, chunk_size);
 
             // VERIFICATION
             {

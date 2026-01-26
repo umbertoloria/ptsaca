@@ -21,9 +21,20 @@ pub struct PTSacaExecutor {
     project_suffix_array_file: String,
     project_outcome_file_json: String,
     project_timing_file_json: String,
+    log_execution: bool,
+    log_fact: bool,
+    log_trees_and_suffix_array: bool,
+    verbose: bool,
 }
 impl PTSacaExecutor {
-    pub fn new(fasta_file_name: &str, chunk_size: Option<usize>) -> Self {
+    pub fn new(
+        fasta_file_name: &str,
+        chunk_size: Option<usize>,
+        log_execution: bool,
+        log_fact: bool,
+        log_trees_and_suffix_array: bool,
+        verbose: bool,
+    ) -> Self {
         let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
         let project_factorization_file =
@@ -43,82 +54,98 @@ impl PTSacaExecutor {
             project_suffix_array_file,
             project_outcome_file_json,
             project_timing_file_json,
+            log_execution,
+            log_fact,
+            log_trees_and_suffix_array,
+            verbose,
         }
     }
 
     fn log_fact(&self, ptsaca: &PTSaca, str: &str) {
-        make_sure_directory_exist(&self.project_folder);
-        log_factorization(
-            &ptsaca.factor_indexes,
-            &ptsaca.icfl_indexes,
-            str,
-            &self.project_factorization_file,
-        );
+        if self.log_fact {
+            make_sure_directory_exist(&self.project_folder);
+            log_factorization(
+                &ptsaca.factor_indexes,
+                &ptsaca.icfl_indexes,
+                str,
+                &self.project_factorization_file,
+            );
+        }
     }
     fn log_trees(&self, ptsaca: &PTSaca) {
-        make_sure_directory_exist(&self.project_folder);
-        /*
-        log_tree(
-            &tree,
-            TreeLogMode::Tree,
-            get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        log_tree(
-            &tree,
-            TreeLogMode::FullTree,
-            get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
-            &str_chars,
-        );
-        */
-        log_tree(
-            &ptsaca.tree,
-            TreeLogMode::MiniTree,
-            &self.project_mini_tree_file,
-            &ptsaca.str_chars,
-        );
+        if self.log_trees_and_suffix_array {
+            make_sure_directory_exist(&self.project_folder);
+            /*
+            log_tree(
+                &tree,
+                TreeLogMode::Tree,
+                get_path_for_project_tree_file(fasta_file_name, chunk_size_or_zero),
+                &str_chars,
+            );
+            log_tree(
+                &tree,
+                TreeLogMode::FullTree,
+                get_path_for_project_full_tree_file(fasta_file_name, chunk_size_or_zero),
+                &str_chars,
+            );
+            */
+            log_tree(
+                &ptsaca.tree,
+                TreeLogMode::MiniTree,
+                &self.project_mini_tree_file,
+                &ptsaca.str_chars,
+            );
+        }
     }
     fn log_suffix_array(&self, ptsaca: &PTSaca) {
-        log_suffix_array(
-            //
-            &ptsaca.suffix_array,
-            &self.project_suffix_array_file,
-        );
+        if self.log_trees_and_suffix_array {
+            log_suffix_array(
+                //
+                &ptsaca.suffix_array,
+                &self.project_suffix_array_file,
+            );
+        }
     }
     fn log_execution(&self, execution_info: &ExecutionInfo) {
-        make_sure_directory_exist(&self.project_folder);
-        // Execution Outcome JSON file
-        let execution_outcome_file_format =
-            ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
-        dump_json_in_file(
-            &execution_outcome_file_format,
-            &self.project_outcome_file_json,
-        );
+        if self.log_execution {
+            make_sure_directory_exist(&self.project_folder);
+            // Execution Outcome JSON file
+            let execution_outcome_file_format =
+                ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
+            dump_json_in_file(
+                &execution_outcome_file_format,
+                &self.project_outcome_file_json,
+            );
 
-        // Execution Timing JSON file
-        let execution_timing_file_format =
-            ExecutionInfoFileFormat::new(&execution_info.execution_timing);
-        dump_json_in_file(
-            //
-            &execution_timing_file_format,
-            &self.project_timing_file_json,
-        );
+            // Execution Timing JSON file
+            let execution_timing_file_format =
+                ExecutionInfoFileFormat::new(&execution_info.execution_timing);
+            dump_json_in_file(
+                //
+                &execution_timing_file_format,
+                &self.project_timing_file_json,
+            );
+        }
     }
 
-    fn print_debug_before(&self, ptsaca: &PTSaca, str: &str) {
-        println!("Before SUFFIX ARRAY PHASE");
-        print_for_human_like_debug(
-            str,
-            &ptsaca.icfl_indexes,
-            &ptsaca.factor_indexes,
-            &ptsaca.idx_to_icfl_factor,
-            &ptsaca.idx_to_is_custom,
-        );
-        ptsaca.tree.print(&ptsaca.str_chars);
+    fn verbose_print_debug_before(&self, ptsaca: &PTSaca, str: &str) {
+        if self.verbose {
+            println!("Before SUFFIX ARRAY PHASE");
+            print_for_human_like_debug(
+                str,
+                &ptsaca.icfl_indexes,
+                &ptsaca.factor_indexes,
+                &ptsaca.idx_to_icfl_factor,
+                &ptsaca.idx_to_is_custom,
+            );
+            ptsaca.tree.print(&ptsaca.str_chars);
+        }
     }
     fn print_debug_after(&self, ptsaca: &PTSaca) {
-        println!("After SUFFIX ARRAY PHASE");
-        ptsaca.tree.print(&ptsaca.str_chars);
+        if self.verbose {
+            println!("After SUFFIX ARRAY PHASE");
+            ptsaca.tree.print(&ptsaca.str_chars);
+        }
     }
 }
 
@@ -182,15 +209,10 @@ impl PTSaca {
 }
 
 pub fn compute_ptsaca(
-    fasta_file_name: &str,
+    executor: PTSacaExecutor,
     str: &str,
     chunk_size: Option<usize>,
-    log_execution: bool,
-    log_fact: bool,
-    log_trees_and_suffix_array: bool,
-    verbose: bool,
 ) -> (Vec<usize>, ExecutionInfo) {
-    let executor = PTSacaExecutor::new(fasta_file_name, chunk_size);
     let mut instance = PTSaca::new();
 
     let mut monitor = Monitor::new();
@@ -201,21 +223,15 @@ pub fn compute_ptsaca(
     instance.p1_factorization(str, chunk_size);
 
     monitor.p1_fact.stop();
-    if log_fact {
-        executor.log_fact(&instance, str);
-    }
+    executor.log_fact(&instance, str);
     monitor.p2_tree.start();
 
     // --- PHASE 2 ---
     instance.p2_tree(&mut monitor);
 
     monitor.p2_tree.stop();
-    if verbose {
-        executor.print_debug_before(&instance, str);
-    }
-    if log_trees_and_suffix_array {
-        executor.log_trees(&instance);
-    }
+    executor.verbose_print_debug_before(&instance, str);
+    executor.log_trees(&instance);
     monitor.p3_sa.start();
 
     // --- PHASE 3 ---
@@ -223,16 +239,10 @@ pub fn compute_ptsaca(
 
     monitor.p3_sa.stop();
     monitor.whole_duration.stop();
-    if verbose {
-        executor.print_debug_after(&instance);
-    }
-    if log_trees_and_suffix_array {
-        executor.log_suffix_array(&instance);
-    }
+    executor.print_debug_after(&instance);
+    executor.log_suffix_array(&instance);
     let execution_info = monitor.transform_info_execution_info();
-    if log_execution {
-        executor.log_execution(&execution_info);
-    }
+    executor.log_execution(&execution_info);
 
     (
         //
