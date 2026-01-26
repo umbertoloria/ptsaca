@@ -1,6 +1,6 @@
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
-use crate::new_suffix_array::compute_innovative_suffix_array;
+use crate::new_suffix_array::compute_ptsaca;
 use crate::plot::plot::draw_plot_from_monitor;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
 use std::time::Duration;
@@ -42,7 +42,7 @@ pub fn full_suite(
         // INNOVATIVE SUFFIX ARRAY
         let mut i = 0;
         for &chunk_size in chunk_size_vec {
-            let innovative_suffix_array_computation = compute_innovative_suffix_array(
+            let (suffix_array, execution_info) = compute_ptsaca(
                 fasta_file_name,
                 str,
                 chunk_size,
@@ -54,7 +54,6 @@ pub fn full_suite(
 
             // VERIFICATION
             {
-                let suffix_array = innovative_suffix_array_computation.suffix_array;
                 let mut success = true;
                 if suffix_array.len() != classic_suffix_array.len() {
                     success = false;
@@ -78,9 +77,7 @@ pub fn full_suite(
                 }
             }
 
-            let et = &innovative_suffix_array_computation
-                .execution_info
-                .execution_timing;
+            let et = &execution_info.execution_timing;
             sum_innovative_micros_vec[i].0 += et.p1_fact.dur.as_micros() as u64;
             sum_innovative_micros_vec[i].1 += et.p2_tree.dur.as_micros() as u64;
             sum_innovative_micros_vec[i].2 += et.p3_sa.dur.as_micros() as u64;

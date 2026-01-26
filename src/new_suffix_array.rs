@@ -14,12 +14,7 @@ use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 
-// INNOVATIVE SUFFIX ARRAY
-pub struct InnovativeSuffixArrayComputationResults {
-    pub suffix_array: Vec<usize>,
-    pub execution_info: ExecutionInfo,
-}
-pub struct InnTry {
+pub struct PTSaca {
     project_folder: String,
     project_factorization_file: String,
     project_mini_tree_file: String,
@@ -34,8 +29,9 @@ pub struct InnTry {
     tree: Tree,
     suffix_array: Vec<usize>,
 }
-impl InnTry {
-    fn new(fasta_file_name: &str, chunk_size_or_zero: usize) -> Self {
+impl PTSaca {
+    fn new(fasta_file_name: &str, chunk_size: Option<usize>) -> Self {
+        let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
         let project_factorization_file =
             get_path_for_project_factorization_file(fasta_file_name, chunk_size_or_zero);
@@ -176,7 +172,7 @@ impl InnTry {
     }
 }
 
-pub fn compute_innovative_suffix_array(
+pub fn compute_ptsaca(
     fasta_file_name: &str,
     str: &str,
     chunk_size: Option<usize>,
@@ -184,46 +180,39 @@ pub fn compute_innovative_suffix_array(
     log_fact: bool,
     log_trees_and_suffix_array: bool,
     verbose: bool,
-) -> InnovativeSuffixArrayComputationResults {
-    let chunk_size_or_zero = chunk_size.unwrap_or(0);
-
-    let mut instance = InnTry::new(fasta_file_name, chunk_size_or_zero);
+) -> (Vec<usize>, ExecutionInfo) {
+    let mut instance = PTSaca::new(fasta_file_name, chunk_size);
 
     let mut monitor = Monitor::new();
     monitor.whole_duration.start();
-
-    // FACTORIZATION
     monitor.p1_fact.start();
-    instance.p1_factorization(str, chunk_size);
-    monitor.p1_fact.stop();
 
-    // + Extra
+    // --- PHASE 1 ---
+    instance.p1_factorization(str, chunk_size);
+
+    monitor.p1_fact.stop();
     if log_fact {
         instance.log_fact(str);
     }
-    // - Extra
-
-    // TREE
     monitor.p2_tree.start();
-    instance.p2_tree(&mut monitor);
-    monitor.p2_tree.stop();
 
-    // + Extra
+    // --- PHASE 2 ---
+    instance.p2_tree(&mut monitor);
+
+    monitor.p2_tree.stop();
     if verbose {
         instance.print_debug_before(str);
     }
     if log_trees_and_suffix_array {
         instance.log_trees();
     }
-    // - Extra
-
-    // SUFFIX ARRAY
     monitor.p3_sa.start();
+
+    // --- PHASE 3 ---
     instance.p3_suffix_array(str, &mut monitor);
+
     monitor.p3_sa.stop();
     monitor.whole_duration.stop();
-
-    // + Extra
     if verbose {
         instance.print_debug_after();
     }
@@ -234,13 +223,14 @@ pub fn compute_innovative_suffix_array(
     if log_execution {
         instance.log_execution(&execution_info);
     }
-    // - Extra
 
-    InnovativeSuffixArrayComputationResults {
-        suffix_array: instance.suffix_array,
+    (
+        //
+        instance.suffix_array,
         execution_info,
-    }
+    )
 }
+
 fn print_for_human_like_debug(
     str: &str,
     icfl_indexes: &Vec<usize>,
