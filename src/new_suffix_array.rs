@@ -158,6 +158,22 @@ impl InnTry {
             &self.project_timing_file_json,
         );
     }
+
+    fn print_debug_before(&self, str: &str) {
+        println!("Before SUFFIX ARRAY PHASE");
+        print_for_human_like_debug(
+            str,
+            &self.icfl_indexes,
+            &self.factor_indexes,
+            &self.idx_to_icfl_factor,
+            &self.idx_to_is_custom,
+        );
+        self.tree.print(&self.str_chars);
+    }
+    fn print_debug_after(&self) {
+        println!("After SUFFIX ARRAY PHASE");
+        self.tree.print(&self.str_chars);
+    }
 }
 
 pub fn compute_innovative_suffix_array(
@@ -167,6 +183,7 @@ pub fn compute_innovative_suffix_array(
     log_execution: bool,
     log_fact: bool,
     log_trees_and_suffix_array: bool,
+    verbose: bool,
 ) -> InnovativeSuffixArrayComputationResults {
     let chunk_size_or_zero = chunk_size.unwrap_or(0);
 
@@ -192,16 +209,8 @@ pub fn compute_innovative_suffix_array(
     monitor.p2_tree.stop();
 
     // + Extra
-    if cfg!(feature = "verbose") {
-        println!("Before SUFFIX ARRAY PHASE");
-        print_for_human_like_debug(
-            str,
-            &instance.icfl_indexes,
-            &instance.factor_indexes,
-            &instance.idx_to_icfl_factor,
-            &instance.idx_to_is_custom,
-        );
-        instance.tree.print(&instance.str_chars);
+    if verbose {
+        instance.print_debug_before(str);
     }
     if log_trees_and_suffix_array {
         instance.log_trees();
@@ -215,9 +224,8 @@ pub fn compute_innovative_suffix_array(
     monitor.whole_duration.stop();
 
     // + Extra
-    if cfg!(feature = "verbose") {
-        println!("After SUFFIX ARRAY PHASE");
-        instance.tree.print(&instance.str_chars);
+    if verbose {
+        instance.print_debug_after();
     }
     if log_trees_and_suffix_array {
         instance.log_suffix_array();
@@ -226,7 +234,6 @@ pub fn compute_innovative_suffix_array(
     if log_execution {
         instance.log_execution(&execution_info);
     }
-    // println!("Total time: {}", duration.as_secs_f32());
     // - Extra
 
     InnovativeSuffixArrayComputationResults {

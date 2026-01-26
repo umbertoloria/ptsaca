@@ -18,6 +18,8 @@ pub fn full_suite(
 ) {
     println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
 
+    let verbose = cfg!(feature = "verbose");
+
     // READING FILE
     let str = &get_fasta_content(get_path_in_generated_folder(fasta_file_name));
 
@@ -47,6 +49,7 @@ pub fn full_suite(
                 log_execution,
                 log_fact,
                 log_trees_and_suffix_array,
+                verbose,
             );
 
             // VERIFICATION
