@@ -1,5 +1,4 @@
-use crate::factorization::custom_factorization::get_custom_factors_and_more_using_chunk_size;
-use crate::factorization::icfl::get_icfl_indexes;
+use crate::alg::ptsaca::PTSaca;
 use crate::factorization::logging::log_factorization;
 use crate::files::json::dump_json_in_file;
 use crate::files::paths::{
@@ -11,7 +10,6 @@ use crate::prefix_tree::log_execution_info::ExecutionInfoFileFormat;
 use crate::prefix_tree::log_execution_outcome::ExecutionOutcomeFileFormat;
 use crate::prefix_tree::logging::{log_tree, TreeLogMode};
 use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
-use crate::prefix_tree::tree::{create_tree, Tree};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 use std::fs::{File, OpenOptions};
 
@@ -134,7 +132,7 @@ impl PTSacaExecutor {
         )
     }
 
-    fn log_fact(&mut self, ptsaca: &PTSaca, str: &str) {
+    pub fn log_fact(&mut self, ptsaca: &PTSaca, str: &str) {
         if let Some(project_factorization_file) = &mut self.project_factorization_file {
             log_factorization(
                 &ptsaca.factor_indexes,
@@ -144,7 +142,7 @@ impl PTSacaExecutor {
             );
         }
     }
-    fn log_trees(&mut self, ptsaca: &PTSaca) {
+    pub fn log_trees(&mut self, ptsaca: &PTSaca) {
         if let Some(project_mini_tree_file) = &mut self.project_mini_tree_file {
             /*
             log_tree(
@@ -168,7 +166,7 @@ impl PTSacaExecutor {
             );
         }
     }
-    fn log_suffix_array(&mut self, ptsaca: &PTSaca) {
+    pub fn log_suffix_array(&mut self, ptsaca: &PTSaca) {
         if let Some(project_suffix_array_file) = &mut self.project_suffix_array_file {
             log_suffix_array(
                 //
@@ -177,7 +175,7 @@ impl PTSacaExecutor {
             );
         }
     }
-    fn log_execution(&mut self, execution_info: &ExecutionInfo) {
+    pub fn log_execution(&mut self, execution_info: &ExecutionInfo) {
         if let Some(project_outcome_file_json) = &mut self.project_outcome_file_json {
             // Execution Outcome JSON file
             let execution_outcome_file_format =
@@ -197,7 +195,7 @@ impl PTSacaExecutor {
         }
     }
 
-    fn verbose_print_debug_before(&self, ptsaca: &PTSaca, str: &str) {
+    pub fn verbose_print_debug_before(&self, ptsaca: &PTSaca, str: &str) {
         if self.verbose {
             println!("Before SUFFIX ARRAY PHASE");
             print_for_human_like_debug(
@@ -210,70 +208,11 @@ impl PTSacaExecutor {
             ptsaca.tree.print(&ptsaca.str_chars);
         }
     }
-    fn print_debug_after(&self, ptsaca: &PTSaca) {
+    pub fn print_debug_after(&self, ptsaca: &PTSaca) {
         if self.verbose {
             println!("After SUFFIX ARRAY PHASE");
             ptsaca.tree.print(&ptsaca.str_chars);
         }
-    }
-}
-
-pub struct PTSaca {
-    str_chars: Vec<char>,
-    icfl_indexes: Vec<usize>,
-    factor_indexes: Vec<usize>,
-    idx_to_is_custom: Vec<bool>,
-    idx_to_icfl_factor: Vec<usize>,
-    tree: Tree,
-    suffix_array: Vec<usize>,
-}
-impl PTSaca {
-    fn new() -> Self {
-        Self {
-            str_chars: Vec::new(),
-            icfl_indexes: Vec::new(),
-            factor_indexes: Vec::new(),
-            idx_to_is_custom: Vec::new(),
-            idx_to_icfl_factor: Vec::new(),
-            tree: Tree::new(),
-            suffix_array: Vec::new(),
-        }
-    }
-
-    fn p1_factorization(&mut self, str: &str, chunk_size: Option<usize>) {
-        // ICFL Factorization
-        let str_chars = str.chars().collect::<Vec<_>>();
-        let icfl_indexes = get_icfl_indexes(&str_chars);
-        // Custom Factorization
-        let (
-            //
-            factor_indexes,
-            idx_to_is_custom,
-            idx_to_icfl_factor,
-        ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, chunk_size, str.len());
-        self.str_chars = str_chars;
-        self.icfl_indexes = icfl_indexes;
-        self.factor_indexes = factor_indexes;
-        self.idx_to_is_custom = idx_to_is_custom;
-        self.idx_to_icfl_factor = idx_to_icfl_factor;
-    }
-    fn p2_tree(&mut self, monitor: &mut Monitor) {
-        self.tree = create_tree(
-            &self.str_chars,
-            &self.factor_indexes,
-            &self.icfl_indexes,
-            &self.idx_to_is_custom,
-            monitor,
-        );
-    }
-    fn p3_suffix_array(&mut self, str: &str, monitor: &mut Monitor) {
-        self.suffix_array = self.tree.compute_suffix_array(
-            str,
-            &self.icfl_indexes,
-            &self.idx_to_is_custom,
-            &self.idx_to_icfl_factor,
-            monitor,
-        );
     }
 }
 

@@ -10,10 +10,10 @@ use std::path::{Path, PathBuf};
 use std::process;
 use suite::full_suite;
 
+mod alg;
 mod extra;
 mod factorization;
 mod files;
-mod new_suffix_array;
 mod plot;
 mod prefix_tree;
 mod suffix_array;

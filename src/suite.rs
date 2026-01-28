@@ -1,6 +1,6 @@
+use crate::alg::executor::{compute_ptsaca, PTSacaExecutor};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
-use crate::new_suffix_array::{compute_ptsaca, PTSacaExecutor};
 use crate::plot::plot::draw_plot_from_monitor;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
 use std::fs::File;
