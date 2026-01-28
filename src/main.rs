@@ -1,5 +1,6 @@
 #![allow(warnings)]
 
+use crate::alg::console_logger::ConsoleLogger;
 use crate::alg::file_logger::FileLogger;
 use crate::extra::suites::generation::main_generation;
 use crate::factorization::cfl::cfl;
@@ -134,7 +135,8 @@ fn main() {
                 None,
                 None,
             );
-            only_compute(fasta_file_name, *chunk_size, file_logger, verbose);
+            let console_logger = ConsoleLogger::new(verbose);
+            only_compute(fasta_file_name, *chunk_size, file_logger, console_logger);
         }
 
         Commands::RunProgram => {

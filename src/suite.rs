@@ -1,4 +1,5 @@
 use crate::alg::avg_output::PTSacaAverageOutput;
+use crate::alg::console_logger::ConsoleLogger;
 use crate::alg::executor::compute_ptsaca;
 use crate::alg::file_logger::FileLogger;
 use crate::alg::ptsaca::{get_phases_duration_from_execution_timing, print_ptsaca_durations};
@@ -10,7 +11,7 @@ pub fn only_compute(
     fasta_file_name: &str,
     chunk_size: usize,
     file_logger: FileLogger,
-    verbose: bool,
+    console_logger: ConsoleLogger,
 ) {
     println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
 
@@ -19,7 +20,7 @@ pub fn only_compute(
 
     // EXECUTION
     let (suffix_array, execution_info) =
-        compute_ptsaca(file_logger, str, Some(chunk_size), verbose);
+        compute_ptsaca(file_logger, console_logger, str, Some(chunk_size));
 
     // PRINTING DURATIONS
     let phases_durations =
@@ -60,7 +61,7 @@ pub fn full_suite(
         // PTSACA EXECUTIONS
         for &chunk_size in chunk_size_vec {
             // EXECUTION
-            let output_buffer = FileLogger::new_from_flags(
+            let file_logger = FileLogger::new_from_flags(
                 fasta_file_name,
                 chunk_size,
                 log_execution,
@@ -68,8 +69,9 @@ pub fn full_suite(
                 log_trees_and_suffix_array,
                 log_trees_and_suffix_array,
             );
+            let console_logger = ConsoleLogger::new(verbose);
             let (suffix_array, execution_info) =
-                compute_ptsaca(output_buffer, str, chunk_size, verbose);
+                compute_ptsaca(file_logger, console_logger, str, chunk_size);
 
             // VERIFICATION
             if csa_result.verify_saca(suffix_array) {
