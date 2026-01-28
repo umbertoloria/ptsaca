@@ -2,6 +2,7 @@
 
 use crate::alg::console_logger::ConsoleLogger;
 use crate::alg::file_logger::FileLogger;
+use crate::cli::cli_init;
 use crate::extra::suites::generation::main_generation;
 use crate::factorization::cfl::cfl;
 use crate::factorization::icfl::icfl;
@@ -13,6 +14,7 @@ use std::process;
 use suite::full_suite;
 
 mod alg;
+mod cli;
 mod extra;
 mod factorization;
 mod files;
@@ -21,131 +23,78 @@ mod prefix_tree;
 mod suffix_array;
 mod suite;
 
-#[derive(Parser)]
-#[command(name = "ptsaca")]
-#[command(about = "A CLI tool for generation and execution of PTSACA", long_about = None)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    /// Generates a Fasta file containing a random genome of given length on ACGT alphabet
-    GenFf {
-        /// A positive number (e.g., 700000)
-        #[arg(value_parser = clap::value_parser!(u64).range(0..))]
-        length: u64,
-
-        /// Path to the output file (e.g., generated/123_700.fasta)
-        path: PathBuf,
-    },
-
-    /// Executes CFL
-    Cfl {
-        /// The string to factorize (e.g., AAABCAABCADCAABCA)
-        src: String,
-    },
-
-    /// Executes ICFL
-    Icfl {
-        /// The string to factorize (e.g., AAABCAABCADCAABCA)
-        src: String,
-    },
-
-    /// Executes PTSACA
-    Run {
-        /// Path of the source Fasta file (e.g., generated/002_70.fasta)
-        src_path: PathBuf,
-
-        /// Chunk size (e.g., 4)
-        chunk_size: usize,
-
-        /// Path to the output Suffix Array file (e.g., out/002_70_sa.txt)
-        out_file_sa_path: PathBuf,
-    },
-
-    /// Executes the main program logic
-    RunProgram,
-}
-
 fn main() {
-    let cli = Cli::parse();
+    cli_init();
+}
 
-    match &cli.command {
-        Commands::GenFf { length, path } => {
-            let file_result = OpenOptions::new().write(true).create_new(true).open(&path);
-            match file_result {
-                Ok(_file) => {
-                    main_generation(*length, _file);
-                }
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-                    eprintln!("Error: The file {:?} already exists. Stopping.", path);
-                    process::exit(1);
-                }
-                Err(e) => {
-                    eprintln!("Error: Could not create file: {}", e);
-                    process::exit(1);
-                }
-            }
+// MAIN GENERATE FASTA FILE
+fn main_generate_fasta_file(length: &u64, path: &&PathBuf) {
+    let file_result = OpenOptions::new().write(true).create_new(true).open(&path);
+    match file_result {
+        Ok(_file) => {
+            main_generation(*length, _file);
         }
-
-        Commands::Cfl { src } => {
-            // let src = "AAABCAABCADCAABCA";
-            println!("CFL({})", src);
-            let factors = cfl(src);
-            for factor in factors {
-                println!("{}", factor);
-            }
-            println!();
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            eprintln!("Error: The file {:?} already exists. Stopping.", path);
+            process::exit(1);
         }
-
-        Commands::Icfl { src } => {
-            // let src = "AAABCAABCADCAABCA";
-            println!("ICFL({})", src);
-            let factors = icfl(src);
-            for factor in factors {
-                println!("{}", factor);
-            }
-            println!();
-        }
-
-        Commands::Run {
-            src_path,
-            chunk_size,
-            out_file_sa_path: out_path,
-        } => {
-            let fasta_file_name = src_path.to_str().expect("Unable to read source file path");
-
-            // TODO: Don't use this way anymore
-            let verbose = cfg!(feature = "verbose");
-
-            if let Some(p) = Path::new(out_path).parent() {
-                if !p.exists() && !p.as_os_str().is_empty() {
-                    panic!("Unable to open destination file");
-                }
-            }
-            let out_sa_file = File::create(out_path).expect("Unable to open destination file");
-
-            let file_logger = FileLogger::new(
-                //
-                None,
-                None,
-                Some(out_sa_file),
-                None,
-                None,
-            );
-            let console_logger = ConsoleLogger::new(verbose);
-            only_compute(fasta_file_name, *chunk_size, file_logger, console_logger);
-        }
-
-        Commands::RunProgram => {
-            main_run_program();
+        Err(e) => {
+            eprintln!("Error: Could not create file: {}", e);
+            process::exit(1);
         }
     }
 }
 
-fn main_run_program() {
+// MAIN FACTORIZATION: CFL
+fn main_factorization_cfl(src: &String) {
+    // let src = "AAABCAABCADCAABCA";
+    println!("CFL({})", src);
+    let factors = cfl(src);
+    for factor in factors {
+        println!("{}", factor);
+    }
+    println!();
+}
+
+// MAIN FACTORIZATION: ICFL
+fn main_factorization_icfl(src: &String) {
+    // let src = "AAABCAABCADCAABCA";
+    println!("ICFL({})", src);
+    let factors = icfl(src);
+    for factor in factors {
+        println!("{}", factor);
+    }
+    println!();
+}
+
+// MAIN RUN
+fn main_run(src_path: &PathBuf, chunk_size: &usize, out_path: &PathBuf) {
+    let fasta_file_name = src_path.to_str().expect("Unable to read source file path");
+
+    // TODO: Don't use this way anymore
+    let verbose = cfg!(feature = "verbose");
+
+    if let Some(p) = Path::new(out_path).parent() {
+        if !p.exists() && !p.as_os_str().is_empty() {
+            panic!("Unable to open destination file");
+        }
+    }
+    let out_sa_file = File::create(out_path).expect("Unable to open destination file");
+
+    let file_logger = FileLogger::new(
+        //
+        None,
+        None,
+        Some(out_sa_file),
+        None,
+        None,
+    );
+    let console_logger = ConsoleLogger::new(verbose);
+    only_compute(fasta_file_name, *chunk_size, file_logger, console_logger);
+}
+
+// MAIN RUN DEBUG PROGRAM
+fn main_run_debug_program() {
     // Chunk Size Interval
     let chunk_size_vec_000 = create_chunk_size_interval_and_none(2, 7);
     let chunk_size_vec_001 = create_chunk_size_interval_and_none(2, 8);
@@ -225,17 +174,14 @@ fn main_run_program() {
     // full_suite("dna200", &chunk_size_vec_dna, 1_000_000, 5, le, lf, lts, dp);
     // full_suite("dna400", &chunk_size_vec_dna, 1_000_000, 5, le, lf, lts, dp);
 }
-
 fn create_chunk_size_interval(min: usize, max: usize) -> Vec<Option<usize>> {
     (min..=max).map(|x| Some(x)).collect()
 }
-
 fn create_chunk_size_interval_and_none(min: usize, max: usize) -> Vec<Option<usize>> {
     let mut result = create_chunk_size_interval(min, max);
     result.push(None);
     result
 }
-
 fn create_chunk_size_of_steps(min: usize, max_excl: usize, step: usize) -> Vec<Option<usize>> {
     let mut result = Vec::new();
     let mut curr = min;
@@ -245,7 +191,6 @@ fn create_chunk_size_of_steps(min: usize, max_excl: usize, step: usize) -> Vec<O
     }
     result
 }
-
 fn merge_chunk_size_intervals(
     a: Vec<Option<usize>>,
     mut b: Vec<Option<usize>>,
@@ -254,7 +199,6 @@ fn merge_chunk_size_intervals(
     result.append(&mut b);
     result
 }
-
 fn create_chunk_size_of_thousands_with_steps(min: usize, max: usize) -> Vec<Option<usize>> {
     (min..=max)
         .map(|x| (x * 1_000, x * 1_000 + 250, x * 1_000 + 500, x * 1_000 + 750))
