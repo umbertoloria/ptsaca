@@ -1,4 +1,4 @@
-use crate::alg::executor::{compute_ptsaca, PTSacaExecutor};
+use crate::alg::executor::{compute_ptsaca, PTSacaOutputBuffer};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
 use crate::plot::plot::draw_plot_from_monitor;
@@ -28,7 +28,7 @@ pub fn only_compute(
     // INNOVATIVE SUFFIX ARRAY
     let mut i = 0;
 
-    let executor = PTSacaExecutor::new(
+    let executor = PTSacaOutputBuffer::new(
         project_factorization_file,
         project_mini_tree_file,
         project_suffix_array_file,
@@ -108,14 +108,13 @@ pub fn full_suite(
         println!(" > NUM ATTEMPT: {}/{}", i_attempt, num_attempts);
 
         // CLASSIC SUFFIX ARRAY
-        let classic_suffix_array_computation = compute_classic_suffix_array(str);
-        let classic_suffix_array = classic_suffix_array_computation.suffix_array;
-        sum_classic_micros += classic_suffix_array_computation.duration.as_micros() as u64;
+        let csa_result = compute_classic_suffix_array(str);
+        sum_classic_micros += csa_result.duration.as_micros() as u64;
 
         // INNOVATIVE SUFFIX ARRAY
         let mut i = 0;
         for &chunk_size in chunk_size_vec {
-            let executor = PTSacaExecutor::new_from_flags(
+            let output_buffer = PTSacaOutputBuffer::new_from_flags(
                 fasta_file_name,
                 chunk_size,
                 log_execution,
@@ -124,31 +123,11 @@ pub fn full_suite(
                 log_trees_and_suffix_array,
                 verbose,
             );
-            let (suffix_array, execution_info) = compute_ptsaca(executor, str, chunk_size);
+            let (suffix_array, execution_info) = compute_ptsaca(output_buffer, str, chunk_size);
 
             // VERIFICATION
-            {
-                let mut success = true;
-                if suffix_array.len() != classic_suffix_array.len() {
-                    success = false;
-                    println!("Computed Suffix Array is insufficient in size");
-                } else {
-                    let mut i = 0;
-                    while i < classic_suffix_array.len() {
-                        let clas_sa_item = classic_suffix_array[i];
-                        let inn_sa_item = suffix_array[i];
-                        if inn_sa_item != clas_sa_item {
-                            println!("Computed Suffix Array is insufficient: element [{}] should be \"{}\" but is \"{}\"", i, clas_sa_item, inn_sa_item);
-                            success = false;
-                        }
-                        i += 1;
-                    }
-                }
-                if !success {
-                    println!(" > Suffix Array: {:?}", suffix_array);
-                    println!("Computed Suffix Array is WRONG!!! :(");
-                    break;
-                }
+            if csa_result.verify_saca(suffix_array) {
+                break;
             }
 
             let et = &execution_info.execution_timing;

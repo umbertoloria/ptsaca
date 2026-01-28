@@ -13,7 +13,7 @@ use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 use std::fs::{File, OpenOptions};
 
-pub struct PTSacaExecutor {
+pub struct PTSacaOutputBuffer {
     project_factorization_file: Option<File>,
     project_mini_tree_file: Option<File>,
     project_suffix_array_file: Option<File>,
@@ -21,7 +21,7 @@ pub struct PTSacaExecutor {
     project_timing_file_json: Option<File>,
     verbose: bool,
 }
-impl PTSacaExecutor {
+impl PTSacaOutputBuffer {
     pub fn new(
         project_factorization_file: Option<File>,
         project_mini_tree_file: Option<File>,
@@ -122,14 +122,14 @@ impl PTSacaExecutor {
         } else {
             None
         };
-        Self::new(
+        Self {
             project_factorization_file,
             project_mini_tree_file,
             project_suffix_array_file,
             project_outcome_file_json,
             project_timing_file_json,
             verbose,
-        )
+        }
     }
 
     pub fn log_fact(&mut self, ptsaca: &PTSaca, str: &str) {
@@ -217,7 +217,7 @@ impl PTSacaExecutor {
 }
 
 pub fn compute_ptsaca(
-    mut executor: PTSacaExecutor,
+    mut output_buffer: PTSacaOutputBuffer,
     str: &str,
     chunk_size: Option<usize>,
 ) -> (Vec<usize>, ExecutionInfo) {
@@ -231,15 +231,15 @@ pub fn compute_ptsaca(
     instance.p1_factorization(str, chunk_size);
 
     monitor.p1_fact.stop();
-    executor.log_fact(&instance, str);
+    output_buffer.log_fact(&instance, str);
     monitor.p2_tree.start();
 
     // --- PHASE 2 ---
     instance.p2_tree(&mut monitor);
 
     monitor.p2_tree.stop();
-    executor.verbose_print_debug_before(&instance, str);
-    executor.log_trees(&instance);
+    output_buffer.verbose_print_debug_before(&instance, str);
+    output_buffer.log_trees(&instance);
     monitor.p3_sa.start();
 
     // --- PHASE 3 ---
@@ -247,10 +247,10 @@ pub fn compute_ptsaca(
 
     monitor.p3_sa.stop();
     monitor.whole_duration.stop();
-    executor.print_debug_after(&instance);
-    executor.log_suffix_array(&instance);
+    output_buffer.print_debug_after(&instance);
+    output_buffer.log_suffix_array(&instance);
     let execution_info = monitor.transform_info_execution_info();
-    executor.log_execution(&execution_info);
+    output_buffer.log_execution(&execution_info);
 
     (
         //
