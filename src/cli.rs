@@ -1,6 +1,7 @@
-use crate::{
-    main_factorization_cfl, main_factorization_icfl, main_generate_fasta_file, main_run,
-    main_run_debug_program,
+use crate::main_debug_program::main_run_debug_program;
+use crate::main_run::main_run_command;
+use crate::main_utils::{
+    main_factorization_cfl, main_factorization_icfl, main_generate_fasta_file,
 };
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -73,7 +74,7 @@ pub fn cli_init() {
             chunk_size,
             out_file_sa_path,
         } => {
-            main_run(src_path, chunk_size, out_file_sa_path);
+            main_run_command(src_path, chunk_size, out_file_sa_path);
         }
 
         Commands::RunProgram => {
