@@ -1,7 +1,7 @@
 use crate::alg::avg_output::PTSacaAverageOutput;
 use crate::alg::console_logger::ConsoleLogger;
 use crate::alg::executor::compute_ptsaca;
-use crate::alg::file_logger::FileLogger;
+use crate::alg::file_logger::{FileLogger, FileLoggerFlagsConf};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
@@ -11,9 +11,7 @@ pub fn full_suite(
     chunk_size_vec: &Vec<Option<usize>>,
     max_duration_in_micros: u32,
     num_attempts: usize,
-    log_execution: bool,
-    log_fact: bool,
-    log_trees_and_suffix_array: bool,
+    file_logger_flags_conf: &FileLoggerFlagsConf,
     draw_plot: bool,
 ) {
     println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
@@ -37,14 +35,8 @@ pub fn full_suite(
         let mut i = 0;
         for &chunk_size in chunk_size_vec {
             // EXECUTION
-            let file_logger = FileLogger::new_from_flags(
-                fasta_file_name,
-                chunk_size,
-                log_execution,
-                log_fact,
-                log_trees_and_suffix_array,
-                log_trees_and_suffix_array,
-            );
+            let file_logger =
+                FileLogger::new_from_flags(fasta_file_name, chunk_size, &file_logger_flags_conf);
             let console_logger = ConsoleLogger::new();
             let (suffix_array, execution_info) =
                 compute_ptsaca(file_logger, console_logger, str, chunk_size);

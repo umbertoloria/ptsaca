@@ -1,3 +1,4 @@
+use crate::alg::file_logger::FileLoggerFlagsConf;
 use crate::suite::full_suite;
 
 pub fn main_run_debug_program() {
@@ -56,29 +57,46 @@ pub fn main_run_debug_program() {
     let dp = true;
     // let dp = false;
 
-    // full_suite("000", &chunk_size_vec_000, 25, 10, le, lf, lts, dp);
-    // full_suite("001", &chunk_size_vec_001, 25, 10, le, lf, lts, dp);
-    // full_suite("002_mini", &chunk_size_vec_002m, 30, 10, le, lf, lts, dp);
-    full_suite("002_70", &chunk_size_vec_70, 200_000, 10, le, lf, false, dp);
+    let base = FileLoggerFlagsConf {
+        log_fact: lf,
+        log_trees: lts,
+        log_suffix_array: lts,
+        log_execution: le,
+    };
+
+    let lite = FileLoggerFlagsConf {
+        log_fact: lf,
+        log_trees: false,
+        log_suffix_array: false,
+        log_execution: le,
+    };
+
+    // full_suite("000", &chunk_size_vec_000, 25, 10, &base, dp);
+    // full_suite("001", &chunk_size_vec_001, 25, 10, &base, dp);
+    // full_suite("002_mini", &chunk_size_vec_002m, 30, 10, &base, dp);
+    full_suite("002_70", &chunk_size_vec_70, 200_000, 10, &lite, dp);
     /*full_suite(
         "002_70",
         &vec![Some(6), Some(56_137)],
         200_000,
         1,
-        false,
-        true,
-        true,
+        &FileLoggerFlagsConf {
+            log_fact: true,
+            log_trees: true,
+            log_suffix_array: true,
+            log_execution: false,
+        },
         false,
     );*/
-    // full_suite("002_700", &chunk_size_vec_700_1, 1_600_000, 10, le, lf, false, dp);
-    // full_suite("002_700", &chunk_size_vec_700_2, 30_000_000, 3, le, lf, false, dp);
-    // full_suite("002_7000", &create_chunk_size_interval(5, 30), 50_000_000, 3, le, lf, false, dp);
+    // full_suite("002_700", &chunk_size_vec_700_1, 1_600_000, 10, &lite, dp);
+    // full_suite("002_700", &chunk_size_vec_700_2, 30_000_000, 3, &lite, dp);
+    // full_suite("002_7000", &create_chunk_size_interval(5, 30), 50_000_000, 3, &lite, dp);
 
     // DNAs
-    // full_suite("dna50", &chunk_size_vec_dna, 1_000_000, 1, le, lf, lts, dp);
-    // full_suite("dna10", &chunk_size_vec_dna, 1_000_000, 5, le, lf, lts, dp);
-    // full_suite("dna200", &chunk_size_vec_dna, 1_000_000, 5, le, lf, lts, dp);
-    // full_suite("dna400", &chunk_size_vec_dna, 1_000_000, 5, le, lf, lts, dp);
+    // full_suite("dna50", &chunk_size_vec_dna, 1_000_000, 1, &base, dp);
+    // full_suite("dna10", &chunk_size_vec_dna, 1_000_000, 5, &base, dp);
+    // full_suite("dna200", &chunk_size_vec_dna, 1_000_000, 5, &base, dp);
+    // full_suite("dna400", &chunk_size_vec_dna, 1_000_000, 5, &base, dp);
 }
 fn create_chunk_size_interval(min: usize, max: usize) -> Vec<Option<usize>> {
     (min..=max).map(|x| Some(x)).collect()

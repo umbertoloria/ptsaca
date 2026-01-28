@@ -39,16 +39,13 @@ impl FileLogger {
     pub fn new_from_flags(
         fasta_file_name: &str,
         chunk_size: Option<usize>,
-        log_fact: bool,
-        log_trees: bool,
-        log_suffix_array: bool,
-        log_execution: bool,
+        file_logger_flags_conf: &FileLoggerFlagsConf,
     ) -> Self {
         let chunk_size_or_zero = chunk_size.unwrap_or(0);
         let project_folder = get_path_for_project_folder(fasta_file_name);
         make_sure_directory_exist(&project_folder);
 
-        let project_factorization_file = if log_fact {
+        let file_factorization = if file_logger_flags_conf.log_fact {
             Some(
                 File::create(get_path_for_project_factorization_file(
                     fasta_file_name,
@@ -59,7 +56,7 @@ impl FileLogger {
         } else {
             None
         };
-        let project_mini_tree_file = if log_trees {
+        let file_mini_tree = if file_logger_flags_conf.log_trees {
             Some(
                 File::create(get_path_for_project_mini_tree_file(
                     fasta_file_name,
@@ -70,7 +67,7 @@ impl FileLogger {
         } else {
             None
         };
-        let project_suffix_array_file = if log_suffix_array {
+        let file_suffix_array = if file_logger_flags_conf.log_suffix_array {
             Some(
                 File::create(get_path_for_project_suffix_array_file(
                     fasta_file_name,
@@ -81,7 +78,7 @@ impl FileLogger {
         } else {
             None
         };
-        let project_outcome_file_json = if log_execution {
+        let file_json_outcome = if file_logger_flags_conf.log_execution {
             Some(
                 File::create(get_path_for_project_outcome_file_json(
                     fasta_file_name,
@@ -92,7 +89,7 @@ impl FileLogger {
         } else {
             None
         };
-        let project_timing_file_json = if log_execution {
+        let file_json_timing = if file_logger_flags_conf.log_execution {
             Some(
                 File::create(get_path_for_project_timing_file_json(
                     fasta_file_name,
@@ -104,11 +101,11 @@ impl FileLogger {
             None
         };
         Self {
-            file_factorization: project_factorization_file,
-            file_mini_tree: project_mini_tree_file,
-            file_suffix_array: project_suffix_array_file,
-            file_json_outcome: project_outcome_file_json,
-            file_json_timing: project_timing_file_json,
+            file_factorization,
+            file_mini_tree,
+            file_suffix_array,
+            file_json_outcome,
+            file_json_timing,
         }
     }
 
@@ -174,4 +171,11 @@ impl FileLogger {
             );
         }
     }
+}
+
+pub struct FileLoggerFlagsConf {
+    pub log_fact: bool,
+    pub log_trees: bool,
+    pub log_suffix_array: bool,
+    pub log_execution: bool,
 }
