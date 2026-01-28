@@ -1,7 +1,8 @@
 use crate::factorization::custom_factorization::get_custom_factors_and_more_using_chunk_size;
 use crate::factorization::icfl::get_icfl_indexes;
-use crate::prefix_tree::monitor::Monitor;
+use crate::prefix_tree::monitor::{ExecutionTiming, Monitor};
 use crate::prefix_tree::tree::{create_tree, Tree};
+use std::time::Duration;
 
 pub struct PTSaca {
     pub str_chars: Vec<char>,
@@ -62,4 +63,34 @@ impl PTSaca {
             monitor,
         );
     }
+}
+
+pub type PTSacaPhasesDurations = (u64, u64, u64);
+pub fn print_ptsaca_durations(chunk_size_or_zero: usize, micros: PTSacaPhasesDurations) {
+    println!("[CHUNK SIZE={chunk_size_or_zero}]");
+    print_duration(" > Phase 1: Factorization ", micros.0);
+    print_duration(" > Phase 2: Prefix Tree   ", micros.1);
+    print_duration(" > Phase 3: Suffix Array  ", micros.2);
+}
+
+pub fn get_phases_duration_from_execution_timing(et: &ExecutionTiming) -> PTSacaPhasesDurations {
+    let p1_duration = et.p1_fact.dur.as_micros() as u64;
+    let p2_duration = et.p2_tree.dur.as_micros() as u64;
+    let p3_duration = et.p3_sa.dur.as_micros() as u64;
+    (
+        //
+        p1_duration,
+        p2_duration,
+        p3_duration,
+    )
+}
+
+pub fn print_duration(prefix: &str, micros: u64) {
+    let duration = Duration::from_micros(micros);
+    println!(
+        "{}: {:10} micros / {:10.3} seconds",
+        prefix,
+        duration.as_micros(),
+        duration.as_secs_f64()
+    );
 }

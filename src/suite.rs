@@ -1,5 +1,6 @@
 use crate::alg::avg_output::PTSacaAverageOutput;
 use crate::alg::executor::{compute_ptsaca, PTSacaOutputBuffer};
+use crate::alg::ptsaca::{get_phases_duration_from_execution_timing, print_ptsaca_durations};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
@@ -20,9 +21,6 @@ pub fn only_compute(
     // READING FILE
     let str = &get_fasta_content(fasta_file_name).expect("Unable to open source file");
 
-    // AVG. OUTPUT
-    let mut avg_output = PTSacaAverageOutput::new();
-
     // EXECUTION
     let output_buffer = PTSacaOutputBuffer::new(
         project_factorization_file,
@@ -34,45 +32,10 @@ pub fn only_compute(
     );
     let (suffix_array, execution_info) = compute_ptsaca(output_buffer, str, Some(chunk_size));
 
-    // UPDATE AVG. OUTPUT DATA
-    avg_output.add_ptsaca_phase_durations(Some(chunk_size), &execution_info.execution_timing);
-
-    // CALCULATING MEANS AND PRINTING
-    let draw_plot = false;
-    let max_duration_in_micros = 0; // TODO: Improve this
-    avg_output.print(draw_plot, fasta_file_name, max_duration_in_micros);
-
-    /*// CALCULATING MEANS AND PRINTING
-    println!("INNOVATIVE SUFFIX ARRAY CALCULATION");
-    let mut chunk_size_and_phase_micros_list = Vec::new();
-    let mut i = 0;
-
-    let sum_micros = &sum_innovative_micros_vec[i];
-    let micros = (
-        (sum_micros.0 as f32) as u64,
-        (sum_micros.1 as f32) as u64,
-        (sum_micros.2 as f32) as u64,
-    );
-    let chunk_size_or_zero = chunk_size;
-    println!("[CHUNK SIZE={chunk_size_or_zero}]");
-    print_duration(" > Phase 1: Factorization ", micros.0);
-    print_duration(" > Phase 2: Prefix Tree   ", micros.1);
-    print_duration(" > Phase 3: Suffix Array  ", micros.2);
-    chunk_size_and_phase_micros_list.push((chunk_size_or_zero, micros));
-    i += 1;
-
-    // PLOT
-
-    // TODO: Enable plots
-    if draw_plot {
-        draw_plot_from_monitor(
-            fasta_file_name,
-            mean_classic_micros,
-            chunk_size_and_phase_micros_list,
-            max_duration_in_micros,
-        );
-    }
-    */
+    // PRINTING DURATIONS
+    let phases_durations =
+        get_phases_duration_from_execution_timing(&execution_info.execution_timing);
+    print_ptsaca_durations(chunk_size, phases_durations);
 }
 
 // SUITE COMPLETE FOR CLASSIC VS INNOVATIVE COMPUTATION
