@@ -1,5 +1,6 @@
 use crate::alg::avg_output::PTSacaAverageOutput;
-use crate::alg::executor::{compute_ptsaca, FileLogger};
+use crate::alg::executor::compute_ptsaca;
+use crate::alg::file_logger::FileLogger;
 use crate::alg::ptsaca::{get_phases_duration_from_execution_timing, print_ptsaca_durations};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;

@@ -1,6 +1,6 @@
 #![allow(warnings)]
 
-use crate::alg::executor::FileLogger;
+use crate::alg::file_logger::FileLogger;
 use crate::extra::suites::generation::main_generation;
 use crate::factorization::cfl::cfl;
 use crate::factorization::icfl::icfl;
