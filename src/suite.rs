@@ -48,7 +48,7 @@ pub fn full_suite(
         .expect("Unable to open source file");
 
     // AVG. OUTPUT
-    let mut avg_output = PTSacaAverageOutput::new();
+    let mut avg_output = PTSacaAverageOutput::new(num_attempts);
 
     // MULTIPLE ATTEMPTS
     for i_attempt in 1..=num_attempts {
@@ -59,6 +59,7 @@ pub fn full_suite(
         avg_output.add_classic_saca_duration(csa_result.duration.as_micros() as u64);
 
         // PTSACA EXECUTIONS
+        let mut i = 0;
         for &chunk_size in chunk_size_vec {
             // EXECUTION
             let file_logger = FileLogger::new_from_flags(
@@ -79,7 +80,8 @@ pub fn full_suite(
             }
 
             // UPDATE AVG. OUTPUT DATA
-            avg_output.add_ptsaca_phase_durations(chunk_size, &execution_info.execution_timing);
+            avg_output.add_ptsaca_phase_durations(i, chunk_size, &execution_info.execution_timing);
+            i += 1;
         }
     }
 
