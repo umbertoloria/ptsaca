@@ -5,7 +5,7 @@ use crate::factorization::cfl::cfl;
 use crate::factorization::icfl::icfl;
 use crate::suite::only_compute;
 use clap::{Parser, Subcommand};
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::process;
 use suite::full_suite;
@@ -123,11 +123,7 @@ fn main() {
                     panic!("Unable to open destination file");
                 }
             }
-            let out_sa_file = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .open(out_path)
-                .expect("Unable to open destination file");
+            let out_sa_file = File::create(out_path).expect("Unable to open destination file");
 
             only_compute(
                 fasta_file_name,

@@ -28,9 +28,9 @@ pub fn only_compute(
         project_suffix_array_file,
         project_outcome_file_json,
         project_timing_file_json,
-        verbose,
     );
-    let (suffix_array, execution_info) = compute_ptsaca(output_buffer, str, Some(chunk_size));
+    let (suffix_array, execution_info) =
+        compute_ptsaca(output_buffer, str, Some(chunk_size), verbose);
 
     // PRINTING DURATIONS
     let phases_durations =
@@ -78,9 +78,9 @@ pub fn full_suite(
                 log_fact,
                 log_trees_and_suffix_array,
                 log_trees_and_suffix_array,
-                verbose,
             );
-            let (suffix_array, execution_info) = compute_ptsaca(output_buffer, str, chunk_size);
+            let (suffix_array, execution_info) =
+                compute_ptsaca(output_buffer, str, chunk_size, verbose);
 
             // VERIFICATION
             if csa_result.verify_saca(suffix_array) {
