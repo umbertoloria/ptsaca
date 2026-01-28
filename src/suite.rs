@@ -1,19 +1,14 @@
 use crate::alg::avg_output::PTSacaAverageOutput;
-use crate::alg::executor::{compute_ptsaca, PTSacaOutputBuffer};
+use crate::alg::executor::{compute_ptsaca, FileLogger};
 use crate::alg::ptsaca::{get_phases_duration_from_execution_timing, print_ptsaca_durations};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
-use std::fs::File;
 
 pub fn only_compute(
     fasta_file_name: &str,
     chunk_size: usize,
-    project_factorization_file: Option<File>,
-    project_mini_tree_file: Option<File>,
-    project_suffix_array_file: Option<File>,
-    project_outcome_file_json: Option<File>,
-    project_timing_file_json: Option<File>,
+    file_logger: FileLogger,
     verbose: bool,
 ) {
     println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
@@ -22,15 +17,8 @@ pub fn only_compute(
     let str = &get_fasta_content(fasta_file_name).expect("Unable to open source file");
 
     // EXECUTION
-    let output_buffer = PTSacaOutputBuffer::new(
-        project_factorization_file,
-        project_mini_tree_file,
-        project_suffix_array_file,
-        project_outcome_file_json,
-        project_timing_file_json,
-    );
     let (suffix_array, execution_info) =
-        compute_ptsaca(output_buffer, str, Some(chunk_size), verbose);
+        compute_ptsaca(file_logger, str, Some(chunk_size), verbose);
 
     // PRINTING DURATIONS
     let phases_durations =
@@ -71,7 +59,7 @@ pub fn full_suite(
         // PTSACA EXECUTIONS
         for &chunk_size in chunk_size_vec {
             // EXECUTION
-            let output_buffer = PTSacaOutputBuffer::new_from_flags(
+            let output_buffer = FileLogger::new_from_flags(
                 fasta_file_name,
                 chunk_size,
                 log_execution,

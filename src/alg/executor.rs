@@ -13,27 +13,27 @@ use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 use crate::suffix_array::logger::{log_suffix_array, make_sure_directory_exist};
 use std::fs::File;
 
-pub struct PTSacaOutputBuffer {
-    project_factorization_file: Option<File>,
-    project_mini_tree_file: Option<File>,
-    project_suffix_array_file: Option<File>,
-    project_outcome_file_json: Option<File>,
-    project_timing_file_json: Option<File>,
+pub struct FileLogger {
+    file_factorization: Option<File>,
+    file_mini_tree: Option<File>,
+    file_suffix_array: Option<File>,
+    file_json_outcome: Option<File>,
+    file_json_timing: Option<File>,
 }
-impl PTSacaOutputBuffer {
+impl FileLogger {
     pub fn new(
-        project_factorization_file: Option<File>,
-        project_mini_tree_file: Option<File>,
-        project_suffix_array_file: Option<File>,
-        project_outcome_file_json: Option<File>,
-        project_timing_file_json: Option<File>,
+        file_factorization: Option<File>,
+        file_mini_tree: Option<File>,
+        file_suffix_array: Option<File>,
+        file_json_outcome: Option<File>,
+        file_json_timing: Option<File>,
     ) -> Self {
         Self {
-            project_factorization_file,
-            project_mini_tree_file,
-            project_suffix_array_file,
-            project_outcome_file_json,
-            project_timing_file_json,
+            file_factorization,
+            file_mini_tree,
+            file_suffix_array,
+            file_json_outcome,
+            file_json_timing,
         }
     }
     pub fn new_from_flags(
@@ -104,16 +104,16 @@ impl PTSacaOutputBuffer {
             None
         };
         Self {
-            project_factorization_file,
-            project_mini_tree_file,
-            project_suffix_array_file,
-            project_outcome_file_json,
-            project_timing_file_json,
+            file_factorization: project_factorization_file,
+            file_mini_tree: project_mini_tree_file,
+            file_suffix_array: project_suffix_array_file,
+            file_json_outcome: project_outcome_file_json,
+            file_json_timing: project_timing_file_json,
         }
     }
 
     pub fn log_fact(&mut self, ptsaca: &PTSaca, str: &str) {
-        if let Some(project_factorization_file) = &mut self.project_factorization_file {
+        if let Some(project_factorization_file) = &mut self.file_factorization {
             log_factorization(
                 &ptsaca.factor_indexes,
                 &ptsaca.icfl_indexes,
@@ -123,7 +123,7 @@ impl PTSacaOutputBuffer {
         }
     }
     pub fn log_trees(&mut self, ptsaca: &PTSaca) {
-        if let Some(project_mini_tree_file) = &mut self.project_mini_tree_file {
+        if let Some(project_mini_tree_file) = &mut self.file_mini_tree {
             /*
             log_tree(
                 &tree,
@@ -147,7 +147,7 @@ impl PTSacaOutputBuffer {
         }
     }
     pub fn log_suffix_array(&mut self, ptsaca: &PTSaca) {
-        if let Some(project_suffix_array_file) = &mut self.project_suffix_array_file {
+        if let Some(project_suffix_array_file) = &mut self.file_suffix_array {
             log_suffix_array(
                 //
                 &ptsaca.suffix_array,
@@ -156,14 +156,14 @@ impl PTSacaOutputBuffer {
         }
     }
     pub fn log_execution(&mut self, execution_info: &ExecutionInfo) {
-        if let Some(project_outcome_file_json) = &mut self.project_outcome_file_json {
+        if let Some(project_outcome_file_json) = &mut self.file_json_outcome {
             // Execution Outcome JSON file
             let execution_outcome_file_format =
                 ExecutionOutcomeFileFormat::new(&execution_info.execution_outcome);
             dump_json_in_file(&execution_outcome_file_format, project_outcome_file_json);
         }
 
-        if let Some(project_timing_file_json) = &mut self.project_timing_file_json {
+        if let Some(project_timing_file_json) = &mut self.file_json_timing {
             // Execution Timing JSON file
             let execution_timing_file_format =
                 ExecutionInfoFileFormat::new(&execution_info.execution_timing);
@@ -177,7 +177,7 @@ impl PTSacaOutputBuffer {
 }
 
 pub fn compute_ptsaca(
-    mut file_logger: PTSacaOutputBuffer,
+    mut file_logger: FileLogger,
     str: &str,
     chunk_size: Option<usize>,
     verbose: bool,

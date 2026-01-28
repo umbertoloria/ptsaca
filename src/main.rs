@@ -1,5 +1,6 @@
 #![allow(warnings)]
 
+use crate::alg::executor::FileLogger;
 use crate::extra::suites::generation::main_generation;
 use crate::factorization::cfl::cfl;
 use crate::factorization::icfl::icfl;
@@ -125,16 +126,15 @@ fn main() {
             }
             let out_sa_file = File::create(out_path).expect("Unable to open destination file");
 
-            only_compute(
-                fasta_file_name,
-                *chunk_size,
+            let file_logger = FileLogger::new(
+                //
                 None,
                 None,
                 Some(out_sa_file),
                 None,
                 None,
-                verbose,
             );
+            only_compute(fasta_file_name, *chunk_size, file_logger, verbose);
         }
 
         Commands::RunProgram => {
