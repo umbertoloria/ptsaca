@@ -74,7 +74,7 @@ pub fn cli_init() {
             chunk_size,
             out_file_sa_path,
         } => {
-            main_run_command(src_path, chunk_size, out_file_sa_path);
+            main_run_command(src_path, *chunk_size, out_file_sa_path);
         }
 
         Commands::RunProgram => {

@@ -2,33 +2,10 @@ use crate::alg::avg_output::PTSacaAverageOutput;
 use crate::alg::console_logger::ConsoleLogger;
 use crate::alg::executor::compute_ptsaca;
 use crate::alg::file_logger::FileLogger;
-use crate::alg::ptsaca::{get_phases_duration_from_execution_timing, print_ptsaca_durations};
 use crate::files::fasta::get_fasta_content;
 use crate::files::paths::get_path_in_generated_folder;
 use crate::suffix_array::classic_suffix_array::compute_classic_suffix_array;
 
-pub fn only_compute(
-    fasta_file_name: &str,
-    chunk_size: usize,
-    file_logger: FileLogger,
-    console_logger: ConsoleLogger,
-) {
-    println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
-
-    // READING FILE
-    let str = &get_fasta_content(fasta_file_name).expect("Unable to open source file");
-
-    // EXECUTION
-    let (suffix_array, execution_info) =
-        compute_ptsaca(file_logger, console_logger, str, Some(chunk_size));
-
-    // PRINTING DURATIONS
-    let phases_durations =
-        get_phases_duration_from_execution_timing(&execution_info.execution_timing);
-    print_ptsaca_durations(chunk_size, phases_durations);
-}
-
-// SUITE COMPLETE FOR CLASSIC VS INNOVATIVE COMPUTATION
 pub fn full_suite(
     fasta_file_name: &str,
     chunk_size_vec: &Vec<Option<usize>>,
@@ -40,8 +17,6 @@ pub fn full_suite(
     draw_plot: bool,
 ) {
     println!("\n\nCOMPUTING SUITE ON FILE: \"{}\"\n", fasta_file_name);
-
-    let verbose = cfg!(feature = "verbose");
 
     // READING FILE
     let str = &get_fasta_content(&get_path_in_generated_folder(fasta_file_name))
@@ -70,7 +45,7 @@ pub fn full_suite(
                 log_trees_and_suffix_array,
                 log_trees_and_suffix_array,
             );
-            let console_logger = ConsoleLogger::new(verbose);
+            let console_logger = ConsoleLogger::new();
             let (suffix_array, execution_info) =
                 compute_ptsaca(file_logger, console_logger, str, chunk_size);
 

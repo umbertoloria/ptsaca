@@ -4,7 +4,8 @@ pub struct ConsoleLogger {
     verbose: bool,
 }
 impl ConsoleLogger {
-    pub fn new(verbose: bool) -> Self {
+    pub fn new() -> Self {
+        let verbose = cfg!(feature = "verbose");
         Self { verbose }
     }
     pub fn log_p3_before(&self, instance: &PTSaca, str: &str) {

@@ -65,15 +65,15 @@ impl PTSaca {
     }
 }
 
-pub type PTSacaPhasesDurations = (u64, u64, u64);
-pub fn print_ptsaca_durations(chunk_size_or_zero: usize, micros: PTSacaPhasesDurations) {
+pub type PhasesDurations = (u64, u64, u64);
+pub fn print_ptsaca_durations(chunk_size_or_zero: usize, micros: PhasesDurations) {
     println!("[CHUNK SIZE={chunk_size_or_zero}]");
     print_duration(" > Phase 1: Factorization ", micros.0);
     print_duration(" > Phase 2: Prefix Tree   ", micros.1);
     print_duration(" > Phase 3: Suffix Array  ", micros.2);
 }
 
-pub fn get_phases_duration_from_execution_timing(et: &ExecutionTiming) -> PTSacaPhasesDurations {
+pub fn get_phases_duration_from_execution_timing(et: &ExecutionTiming) -> PhasesDurations {
     let p1_duration = et.p1_fact.dur.as_micros() as u64;
     let p2_duration = et.p2_tree.dur.as_micros() as u64;
     let p3_duration = et.p3_sa.dur.as_micros() as u64;

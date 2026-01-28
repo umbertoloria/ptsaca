@@ -1,6 +1,6 @@
 use crate::alg::ptsaca::{
     get_phases_duration_from_execution_timing, print_duration, print_ptsaca_durations,
-    PTSacaPhasesDurations,
+    PhasesDurations,
 };
 use crate::plot::plot::draw_plot_from_monitor;
 use crate::prefix_tree::monitor::ExecutionTiming;
@@ -54,7 +54,7 @@ impl PTSacaAverageOutput {
         let mut chunk_size_and_phase_micros_list = Vec::new();
         for (chunk_size, p1_duration, p2_duration, p3_duration) in &self.ptsaca_executions_durations
         {
-            let micros: PTSacaPhasesDurations = (
+            let micros: PhasesDurations = (
                 (*p1_duration as f32 / self.num_attempts as f32) as u64,
                 (*p2_duration as f32 / self.num_attempts as f32) as u64,
                 (*p3_duration as f32 / self.num_attempts as f32) as u64,
