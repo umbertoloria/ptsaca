@@ -1,7 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 
-pub fn get_fasta_content(filepath: &str) -> std::io::Result<String> {
+pub fn get_fasta_content<P: AsRef<Path>>(filepath: P) -> std::io::Result<String> {
     let file = File::open(filepath)?;
     let reader = BufReader::new(file);
 

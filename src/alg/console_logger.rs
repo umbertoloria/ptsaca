@@ -8,23 +8,23 @@ impl ConsoleLogger {
         let verbose = cfg!(feature = "verbose");
         Self { verbose }
     }
-    pub fn log_p3_before(&self, instance: &PTSaca, str: &str) {
+    pub fn log_p3_before(&self, ptsaca: &PTSaca, str: &str) {
         if self.verbose {
             println!("Before SUFFIX ARRAY PHASE");
             print_for_human_like_debug(
                 str,
-                &instance.icfl_indexes,
-                &instance.factor_indexes,
-                &instance.idx_to_icfl_factor,
-                &instance.idx_to_is_custom,
+                &ptsaca.icfl_indexes,
+                &ptsaca.factor_indexes,
+                &ptsaca.idx_to_icfl_factor,
+                &ptsaca.idx_to_is_custom,
             );
-            instance.tree.print(&instance.str_chars);
+            ptsaca.tree.print(&ptsaca.str_chars);
         }
     }
-    pub fn log_p3_after(&self, instance: &PTSaca) {
+    pub fn log_p3_after(&self, ptsaca: &PTSaca) {
         if self.verbose {
             println!("After SUFFIX ARRAY PHASE");
-            instance.tree.print(&instance.str_chars);
+            ptsaca.tree.print(&ptsaca.str_chars);
         }
     }
 }

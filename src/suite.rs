@@ -32,23 +32,27 @@ pub fn full_suite(
         avg_output.add_classic_saca_duration(csa_result.duration.as_micros() as u64);
 
         // PTSACA EXECUTIONS
-        let mut i = 0;
-        for &chunk_size in chunk_size_vec {
+        for i in 0..chunk_size_vec.len() {
+            let chunk_size = chunk_size_vec[i];
+
             // EXECUTION
             let file_logger =
                 FileLogger::new_from_flags(fasta_file_name, chunk_size, &file_logger_flags_conf);
             let console_logger = ConsoleLogger::new();
-            let (suffix_array, execution_info) =
-                compute_ptsaca(str, chunk_size, file_logger, console_logger);
+
+            let results = compute_ptsaca(str, chunk_size, file_logger, console_logger);
 
             // VERIFICATION
-            if csa_result.verify_saca(suffix_array) {
+            if csa_result.verify_saca(results.ptsaca.suffix_array) {
                 break;
             }
 
             // UPDATE AVG. OUTPUT DATA
-            avg_output.add_ptsaca_phase_durations(i, chunk_size, &execution_info.execution_timing);
-            i += 1;
+            avg_output.add_ptsaca_phase_durations(
+                i,
+                chunk_size,
+                &results.execution_info.execution_timing,
+            );
         }
     }
 

@@ -6,6 +6,7 @@ use std::time::Duration;
 
 pub struct PTSaca {
     pub str_chars: Vec<char>,
+    pub chunk_size: Option<usize>,
     pub icfl_indexes: Vec<usize>,
     pub factor_indexes: Vec<usize>,
     pub idx_to_is_custom: Vec<bool>,
@@ -14,9 +15,10 @@ pub struct PTSaca {
     pub suffix_array: Vec<usize>,
 }
 impl PTSaca {
-    pub fn new() -> Self {
+    pub fn new(chunk_size: Option<usize>) -> Self {
         Self {
             str_chars: Vec::new(),
+            chunk_size,
             icfl_indexes: Vec::new(),
             factor_indexes: Vec::new(),
             idx_to_is_custom: Vec::new(),
@@ -26,7 +28,7 @@ impl PTSaca {
         }
     }
 
-    pub fn p1_factorization(&mut self, str: &str, chunk_size: Option<usize>) {
+    pub fn p1_factorization(&mut self, str: &str) {
         // ICFL Factorization
         let str_chars = str.chars().collect::<Vec<_>>();
         let icfl_indexes = get_icfl_indexes(&str_chars);
@@ -36,7 +38,7 @@ impl PTSaca {
             factor_indexes,
             idx_to_is_custom,
             idx_to_icfl_factor,
-        ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, chunk_size, str.len());
+        ) = get_custom_factors_and_more_using_chunk_size(&icfl_indexes, self.chunk_size, str.len());
         self.str_chars = str_chars;
         self.icfl_indexes = icfl_indexes;
         self.factor_indexes = factor_indexes;
