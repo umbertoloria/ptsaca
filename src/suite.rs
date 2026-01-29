@@ -39,7 +39,7 @@ pub fn full_suite(
                 FileLogger::new_from_flags(fasta_file_name, chunk_size, &file_logger_flags_conf);
             let console_logger = ConsoleLogger::new();
             let (suffix_array, execution_info) =
-                compute_ptsaca(file_logger, console_logger, str, chunk_size);
+                compute_ptsaca(str, chunk_size, file_logger, console_logger);
 
             // VERIFICATION
             if csa_result.verify_saca(suffix_array) {

@@ -4,10 +4,10 @@ use crate::alg::ptsaca::PTSaca;
 use crate::prefix_tree::monitor::{ExecutionInfo, Monitor};
 
 pub fn compute_ptsaca(
-    mut file_logger: FileLogger,
-    console_logger: ConsoleLogger,
     str: &str,
     chunk_size: Option<usize>,
+    mut file_logger: FileLogger,
+    console_logger: ConsoleLogger,
 ) -> (Vec<usize>, ExecutionInfo) {
     let mut instance = PTSaca::new();
 

@@ -21,20 +21,17 @@ pub struct FileLogger {
     file_json_timing: Option<File>,
 }
 impl FileLogger {
-    pub fn new(
-        file_factorization: Option<File>,
-        file_mini_tree: Option<File>,
-        file_suffix_array: Option<File>,
-        file_json_outcome: Option<File>,
-        file_json_timing: Option<File>,
-    ) -> Self {
+    pub fn new() -> Self {
         Self {
-            file_factorization,
-            file_mini_tree,
-            file_suffix_array,
-            file_json_outcome,
-            file_json_timing,
+            file_factorization: None,
+            file_mini_tree: None,
+            file_suffix_array: None,
+            file_json_outcome: None,
+            file_json_timing: None,
         }
+    }
+    pub fn set_file_suffix_array(&mut self, file_suffix_array: File) {
+        self.file_suffix_array = Some(file_suffix_array);
     }
     pub fn new_from_flags(
         fasta_file_name: &str,

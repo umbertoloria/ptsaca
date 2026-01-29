@@ -24,18 +24,12 @@ pub fn main_run_command(src_path: &PathBuf, chunk_size: usize, out_path: &PathBu
     let str = &get_fasta_content(src_fasta_fp).expect("Unable to open source file");
 
     // SETUP
-    let file_logger = FileLogger::new(
-        //
-        None,
-        None,
-        Some(out_sa_file),
-        None,
-        None,
-    );
+    let mut file_logger = FileLogger::new();
+    file_logger.set_file_suffix_array(out_sa_file);
     let console_logger = ConsoleLogger::new();
 
     // EXECUTION
-    let (_, execution_info) = compute_ptsaca(file_logger, console_logger, str, Some(chunk_size));
+    let (_, execution_info) = compute_ptsaca(str, Some(chunk_size), file_logger, console_logger);
 
     // PRINTING DURATIONS
     let phases_durations =

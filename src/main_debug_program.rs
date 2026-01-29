@@ -48,27 +48,22 @@ pub fn main_run_debug_program() {
     // let chunk_size_vec = create_chunk_size_of_thousands_with_steps(1, 70);
     */
 
-    // Logging?
-    let le = true;
-    let lf = false;
-    // let lf = true;
-    let lts = false;
-    // let lts = true;
     let dp = true;
     // let dp = false;
-
     let base = FileLoggerFlagsConf {
-        log_fact: lf,
-        log_trees: lts,
-        log_suffix_array: lts,
-        log_execution: le,
-    };
-
-    let lite = FileLoggerFlagsConf {
-        log_fact: lf,
+        log_fact: false,
+        // log_fact: true,
         log_trees: false,
         log_suffix_array: false,
-        log_execution: le,
+        // log_trees: true,
+        // log_suffix_array: true,
+        log_execution: true,
+    };
+    let lite = FileLoggerFlagsConf {
+        log_fact: base.log_fact,
+        log_trees: false,
+        log_suffix_array: false,
+        log_execution: base.log_execution,
     };
 
     // full_suite("000", &chunk_size_vec_000, 25, 10, &base, dp);
