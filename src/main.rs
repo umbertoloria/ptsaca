@@ -1,7 +1,6 @@
 #![allow(warnings)]
 
 use crate::cli::cli_init;
-use clap::{Parser, Subcommand};
 
 mod alg;
 mod cli;
