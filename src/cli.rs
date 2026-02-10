@@ -24,6 +24,9 @@ enum Commands {
 
         /// Path to the output file (e.g., generated/123_700.fasta)
         path: PathBuf,
+
+        #[arg(short, long)]
+        verbose: bool,
     },
 
     /// Executes CFL
@@ -57,8 +60,12 @@ enum Commands {
 pub fn cli_init() {
     let cli = Cli::parse();
     match &cli.command {
-        Commands::GenFf { length, path } => {
-            main_generate_fasta_file(length, &path);
+        Commands::GenFf {
+            length,
+            path,
+            verbose,
+        } => {
+            main_generate_fasta_file(length, &path, *verbose);
         }
 
         Commands::Cfl { src } => {

@@ -18,8 +18,11 @@ pub fn get_fasta_content<P: AsRef<Path>>(filepath: P) -> std::io::Result<String>
     Ok(result)
 }
 
-pub fn save_fasta_with_content(mut f: File, whole_line: String) {
-    let max_chars_in_line = 70;
+const MAX_CHARS_IN_FASTA_FILE_LINE: usize = 70;
+pub fn save_fasta_with_content(mut f: File, whole_line: String, verbose: bool) {
+    if verbose {
+        println!("Saving file");
+    }
 
     let string_length = whole_line.len();
 
@@ -34,7 +37,7 @@ pub fn save_fasta_with_content(mut f: File, whole_line: String) {
         let mut curr_line = String::new();
         while let Some(curr_char) = chars.next() {
             curr_line.push(curr_char);
-            if curr_line.len() < max_chars_in_line {
+            if curr_line.len() < MAX_CHARS_IN_FASTA_FILE_LINE {
                 // Ok.
             } else {
                 break;
@@ -42,13 +45,18 @@ pub fn save_fasta_with_content(mut f: File, whole_line: String) {
         }
         i += curr_line.len();
         curr_line.push('\n');
+
         f.write(curr_line.as_bytes()).expect("Unable to write line");
-        if curr_line.len() < max_chars_in_line {
+
+        if curr_line.len() < MAX_CHARS_IN_FASTA_FILE_LINE {
             // No more chars.
             break;
         } else {
             // There are many chars to come.
         }
-        println!(" > Written chars {}/{}", i, string_length);
+
+        if verbose {
+            println!(" > Written chars {:10}/{}", i, string_length);
+        }
     }
 }

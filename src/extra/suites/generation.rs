@@ -4,17 +4,21 @@ use std::fs::File;
 
 const GENETIC_ALPHABET: [char; 4] = ['A', 'C', 'G', 'T'];
 
-pub fn main_generation(num_length: u64, file: File) {
+const MAX_CHARS_PER_ITERATION: i128 = 100_000;
+
+pub fn main_generation(num_length: u64, file: File, verbose: bool) {
     let mut num_length = i128::from(num_length);
 
-    let max_chars_per_iteration = 100_000;
-    let num_lines_max = num_length / max_chars_per_iteration;
+    let num_lines_max = num_length / MAX_CHARS_PER_ITERATION;
 
     let mut output = String::new();
 
-    println!("Generating file with {} chars", num_length);
+    if verbose {
+        println!("Generating file with {} chars", num_length);
+    }
+
     while num_length > 0 {
-        let num_chars_this_iteration = max_chars_per_iteration.min(num_length);
+        let num_chars_this_iteration = MAX_CHARS_PER_ITERATION.min(num_length);
         let mut i = 0;
         while i < num_chars_this_iteration {
             let rand_index = rand::random_range(0..GENETIC_ALPHABET.len());
@@ -24,15 +28,19 @@ pub fn main_generation(num_length: u64, file: File) {
             i += 1;
             num_length -= 1;
         }
-        let num_lines_left = num_length / max_chars_per_iteration;
-        println!(
-            " -> {}/{} lines: {} chars done, left {}",
-            num_lines_left, num_lines_max, num_chars_this_iteration, num_length
-        );
+        let num_lines_left = num_length / MAX_CHARS_PER_ITERATION;
+
+        if verbose {
+            println!(
+                " -> {}/{} lines: {} chars done, left {}",
+                num_lines_left, num_lines_max, num_chars_this_iteration, num_length
+            );
+        }
     }
-    println!("Generated, now it's time to save...");
 
-    save_fasta_with_content(file, output);
+    save_fasta_with_content(file, output, verbose);
 
-    println!("OK!");
+    if verbose {
+        println!("OK!");
+    }
 }

@@ -6,11 +6,11 @@ use std::path::PathBuf;
 use std::process;
 
 // MAIN GENERATE FASTA FILE
-pub fn main_generate_fasta_file(length: &u64, path: &&PathBuf) {
+pub fn main_generate_fasta_file(length: &u64, path: &&PathBuf, verbose: bool) {
     let file_result = OpenOptions::new().write(true).create_new(true).open(&path);
     match file_result {
         Ok(_file) => {
-            main_generation(*length, _file);
+            main_generation(*length, _file, verbose);
         }
         Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
             eprintln!("Error: The file {:?} already exists. Stopping.", path);
