@@ -20,3 +20,9 @@ Here are some examples of command one can run.
 > cargo run run generated/002_70.fasta 5 sa_output.txt
 > 
 > cargo run run-program # Debug
+
+
+## Todos
+
+- Create makefile to have "ptsaca"
+- Generate synthetic FASTA files (right now are completely random)
