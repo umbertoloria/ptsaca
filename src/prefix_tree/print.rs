@@ -1,6 +1,6 @@
-use crate::prefix_tree::tree::{Tree, TreeNode};
+use crate::prefix_tree::tree::{PTree, TreeNode};
 
-impl Tree {
+impl PTree {
     pub fn print(&self, str: &[char]) {
         self.print_node(&self.root, 0, "", str);
     }

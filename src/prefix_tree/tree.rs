@@ -8,12 +8,12 @@ pub fn create_tree(
     icfl_indexes: &Vec<usize>,
     idx_to_is_custom: &Vec<bool>,
     monitor: &mut Monitor,
-) -> Tree {
+) -> PTree {
     let str_length = str.len();
     let max_factor_size = get_max_factor_size(&factor_indexes, str_length);
     let last_icfl_factor_size = str_length - icfl_indexes[icfl_indexes.len() - 1];
 
-    let mut tree = Tree::new();
+    let mut tree = PTree::new();
 
     for ls_size in 1..=max_factor_size {
         // Looking for LSs with length "ls_size":
@@ -68,11 +68,10 @@ pub fn create_tree(
     tree
 }
 
-// TODO: Rename PTree?
-pub struct Tree {
+pub struct PTree {
     pub root: TreeNode,
 }
-impl Tree {
+impl PTree {
     pub fn new() -> Self {
         Self {
             root: TreeNode::new(0),

@@ -1,8 +1,8 @@
 use crate::prefix_tree::monitor::Monitor;
 use crate::prefix_tree::rules::rules_safe;
-use crate::prefix_tree::tree::{Tree, TreeNode};
+use crate::prefix_tree::tree::{PTree, TreeNode};
 
-impl Tree {
+impl PTree {
     pub fn compute_suffix_array(
         &self,
         str: &str,

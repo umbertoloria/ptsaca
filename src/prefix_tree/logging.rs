@@ -1,5 +1,5 @@
 use crate::prefix_tree::print::get_string_clone;
-use crate::prefix_tree::tree::{Tree, TreeNode};
+use crate::prefix_tree::tree::{PTree, TreeNode};
 use std::fs::File;
 use std::io::Write;
 
@@ -9,7 +9,7 @@ pub enum TreeLogMode {
     FullTree,
     MiniTree,
 }
-pub fn log_tree(tree: &Tree, mode: TreeLogMode, file: &mut File, str: &[char]) {
+pub fn log_tree(tree: &PTree, mode: TreeLogMode, file: &mut File, str: &[char]) {
     // Logging from all First Layer Nodes to all Leafs (avoiding Root Node).
     for (child_node_label_pq, child_node) in &tree.root.children {
         let (child_node_label_p, child_node_label_q) = *child_node_label_pq;

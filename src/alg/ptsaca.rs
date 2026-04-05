@@ -1,7 +1,7 @@
 use crate::factorization::custom_factorization::get_custom_factors_and_more_using_chunk_size;
 use crate::factorization::icfl::get_icfl_indexes;
 use crate::prefix_tree::monitor::{ExecutionTiming, Monitor};
-use crate::prefix_tree::tree::{create_tree, Tree};
+use crate::prefix_tree::tree::{create_tree, PTree};
 use std::time::Duration;
 
 pub struct PTSaca {
@@ -11,7 +11,7 @@ pub struct PTSaca {
     pub factor_indexes: Vec<usize>,
     pub idx_to_is_custom: Vec<bool>,
     pub idx_to_icfl_factor: Vec<usize>,
-    pub tree: Tree,
+    pub tree: PTree,
     pub suffix_array: Vec<usize>,
 }
 impl PTSaca {
@@ -23,7 +23,7 @@ impl PTSaca {
             factor_indexes: Vec::new(),
             idx_to_is_custom: Vec::new(),
             idx_to_icfl_factor: Vec::new(),
-            tree: Tree::new(),
+            tree: PTree::new(),
             suffix_array: Vec::new(),
         }
     }
